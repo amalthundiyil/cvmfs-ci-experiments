@@ -35,12 +35,16 @@ jobs:
     env:
       REGISTRY_IMAGE_PATH: docker.io/kubernetes/cvmfs-csi:${{ github.event_name == 'tag' && github.ref || github.sha }}
       COSIGN_PRIVATE_KEY: ${{ secrets.HARBOR_SIGNKEY }}
-      DOCKER_FILE_NAME: deployments/docker/Dockerfile
+      DOCKER_FILE_NAME: cvmfs-csi/deployments/docker/Dockerfile
       PLATFORMS: linux/amd64,linux/arm64
       BUILD_ARGS: RELEASE=${{ github.event_name == 'tag' && github.ref || github.sha }} GITREF=${{ github.sha }} CREATED=${{ github.event.created_at }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@v2
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
         with:
@@ -70,7 +74,7 @@ jobs:
         uses: helm/github-action@v2
         with:
           chart-ref: ${{ github.sha }}
-          chart-path: .
+          chart-path: cvmfs-csi/deployments/helm/cvmfs-csi
           registry: ${{ env.REGISTRY_CHART_PATH }}
           push-chart: ${{ github.event_name == 'tag' }}
       - name: Sign chart 
