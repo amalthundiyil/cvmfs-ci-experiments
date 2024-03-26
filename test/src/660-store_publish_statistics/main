@@ -1,0 +1,227 @@
+#!/bin/bash
+# This file contains $NR_OF_TESTS tests for checking the store publish statistics feature (checking the database integrity)
+cvmfs_test_name="Store publish statistics in a SQLite database"
+cvmfs_test_autofs_on_startup=false
+cvmfs_test_suites="quick"
+
+CVMFS_TEST_660_NR_OF_TESTS=5
+CVMFS_TEST_660_DB_PATH=/var/spool/cvmfs/test-660.cern.ch/stats.db
+CVMFS_TEST_660_TAR_FILE=tarfile.tar
+CVMFS_TEST_660_TAR_DIR=newTarDir
+CVMFS_TEST_660_REPO=
+
+inflate_file() {
+  local destination_file=$1
+  local source_file=$2
+  local desired_file_size=$3
+
+  touch $destination_file
+  while [ $(stat -c %s $destination_file) -lt $desired_file_size ]; do
+    cat $source_file >> $destination_file
+  done
+}
+
+test1() {
+  local working_dir=$1
+
+  pushdir $working_dir
+
+  echo "meaningless file content" > file1    # 1 file added ; 25 bytes added
+  echo "more clever file content" > file2    # 1 file added ; 25 bytes added
+  echo "" > file3                            # 1 file added ; 1 byte added ['\n']
+  mkdir -p foo                               # 1 directory added
+  mkdir -p bar                               # 1 directory added
+  touch ./foo/file4                          # 1 file added ; 0 byte added
+  echo "123 - testing" > ./foo/file5         # 1 file added ; 14 byte added
+  ln -s file1 symlink1                       # 1 symlink added
+  ln -s file2 symlink2                       # 1 symlink added
+
+  popdir
+}
+
+test2() {
+  local working_dir=$1
+
+  pushdir $working_dir
+
+  echo "additional meaningless content" >> file1   # 1 file changed ; 31 bytes added
+  echo "new file content" > file2                  # 1 file changed ; (25 -17 = 8 bytes removed
+  touch bar                                        # 1 directory changed
+  rm -rf foo               # 1 directory removed ; 2 files removed ; 14 bytes removed
+  rm symlink1                                      # 1 symlink removed
+  echo "12345" > symlink1                          # 1 file added; 5 bytes added
+  rm symlink2
+  ln -s file1 symlink2                             # 1 symlink changed
+  popdir
+}
+
+#ingest command test
+test3() {
+  local working_dir=$1
+
+  pushdir $working_dir
+
+  echo "*** Create files in $working_dir..."
+  test1 $working_dir
+  echo "*** Making tar file..."
+  tar -cvf $CVMFS_TEST_660_TAR_FILE  * || return $?
+  echo "*** Tar file created."
+  popdir
+}
+
+# catalogs + chunks test
+test5() {
+  local working_dir=$1
+  pushdir $working_dir
+
+  mkdir foo
+  touch foo/.cvmfscatalog
+  echo "smallfilesmallfile" > foo/smallfile
+  inflate_file foo/mediumfile foo/smallfile 100000     # 100kB file
+  inflate_file foo/bigfile foo/mediumfile   100000000  # 100MB file
+  popdir
+}
+
+cleanup() {
+  if [ "x$CVMFS_TEST_660_REPO" != "x" ]; then
+    destroy_repo $CVMFS_TEST_660_REPO
+  fi
+}
+
+cvmfs_run_test() {
+  logfile=$1
+  local repo_name=test-660.cern.ch
+  local repo_dir=/cvmfs/$repo_name
+  local scratch_dir=$(pwd)
+  local tar_file_path=$scratch_dir/tmp_dir/$CVMFS_TEST_660_TAR_FILE
+  declare -A actual_values
+
+  echo "*** Create a fresh repository named $repo_name with user $CVMFS_TEST_USER"
+  create_empty_repo $repo_name $CVMFS_TEST_USER || return $?
+  CVMFS_TEST_660_REPO=$repo_name
+  trap cleanup EXIT HUP INT TERM
+
+  # # just to be written in log file
+  # echo "*** Activate the statistics by writing in server.conf file CVMFS_PRINT_STATISTICS=true"
+  # cat /etc/cvmfs/repositories.d/$repo_name/server.conf | grep CVMFS_PRINT_STATISTICS
+  # if [ $? -eq 0 ]; then   # just change the value
+  #   echo "*** Found CVMFS_PRINT_STATISTICS variable, value overwritten with true."
+  #   sed -i 's/CVMFS_PRINT_STATISTICS=.*/CVMFS_PRINT_STATISTICS=true/' /etc/cvmfs/repositories.d/$repo_name/server.conf
+  # else
+  #   echo "*** CVMFS_PRINT_STATISTICS not found, append CVMFS_PRINT_STATISTICS=true in server.conf"
+  #   echo "CVMFS_PRINT_STATISTICS=true" >> /etc/cvmfs/repositories.d/$repo_name/server.conf
+  # fi
+
+  # ============================ Test1 =============================
+
+  echo "*** starting transaction to edit repository"
+  start_transaction $repo_name || return $?
+
+  echo "*** Test 1 - putting some stuff in the new repository"
+  test1 $repo_dir || return 1
+
+  echo "*** creating CVMFS snapshot"
+  publish_repo $repo_name || return $?
+  # get the last inserted data
+  actual_values[1]=$(sqlite3 $CVMFS_TEST_660_DB_PATH 'select * from publish_statistics' | tail -1)
+
+  # ============================ Test2 =============================
+
+  echo "*** init a new transaction to change something in repository $repo_name"
+  start_transaction $repo_name || return $?
+
+  echo "*** Test 2 - change stuff in the repository"
+  test2 $repo_dir || return 2
+
+  echo "*** creating CVMFS snapshot"
+  publish_repo $repo_name || return $?
+  # get the last inserted data
+  actual_values[2]=$(sqlite3 $CVMFS_TEST_660_DB_PATH 'select * from publish_statistics' | tail -1)
+
+  # ============================ Test3 =============================
+
+  echo "*** Test 3 - making a tar and execute ingest command"
+  mkdir tmp_dir
+  test3 $scratch_dir/tmp_dir || return 3
+  cvmfs_server ingest -t $tar_file_path -b $CVMFS_TEST_660_TAR_DIR $repo_name || return $?
+  # get the last inserted data
+  actual_values[3]=$(sqlite3 $CVMFS_TEST_660_DB_PATH 'select * from publish_statistics' | tail -1)
+
+  # ============================ Test4 =============================
+
+  echo "*** Test 4 - overwrite the tar file"
+  cvmfs_server ingest -t $tar_file_path -b $CVMFS_TEST_660_TAR_DIR $repo_name || return $?
+  # get the last inserted data
+  actual_values[4]=$(sqlite3 $CVMFS_TEST_660_DB_PATH 'select * from publish_statistics' | tail -1)
+
+  # ============================ Test5 =============================
+
+  echo "*** Test 5 - nested catalogs and chunked files"
+  start_transaction $repo_name || return $?
+
+  test5 $repo_dir || return 2
+
+  publish_repo $repo_name || return $?
+
+  actual_values[5]=$(sqlite3 $CVMFS_TEST_660_DB_PATH 'select * from publish_statistics' | tail -1)
+
+
+  # =========================================================================================================
+
+  echo "*** check catalog and data integrity"
+  check_repository $repo_name -i || return $?
+
+  column_names=([3]=revision \
+                n_files_added \
+                n_files_removed \
+                n_files_changed \
+                n_chunks_added \
+                n_chunks_duplicated \
+                n_catalogs_added \
+                n_directories_added \
+                n_directories_removed \
+                n_directories_changed \
+                n_symlinks_added \
+                n_symlinks_removed \
+                n_symlinks_changed \
+                sz_bytes_added \
+                sz_bytes_removed \
+                sz_bytes_uploaded)
+
+  # Reference test values
+  # test 1
+  expected_values_1=([3]=3 5 0 0 5 0 1 2 0 0 2 0 0 65 0 103)
+
+  # test 2
+  expected_values_2=([3]=4 1 2 2 3 0 1 0 1 1 0 1 1 37 22 88)
+
+  # test 3
+  expected_values_3=([3]=5 5 0 0 0 5 1 3 0 0 2 0 0 65 0 0)
+
+  # test 4
+  expected_values_4=([3]=6 0 0 5 0 5 1 0 0 0 0 0 2 0 0 0)
+
+  # test 5
+  expected_values_5=([3]=7 4 0 0 8 1 2 1 0 0 0 0 0 100116035 0 243062)
+
+
+  # check publish statistics
+  for i in `seq 1 $CVMFS_TEST_660_NR_OF_TESTS`;
+  do
+    local cur_actual_values
+    IFS="|" read -r -a cur_actual_values <<< ${actual_values[$i]}
+    # comparing columns 3 to 18 (numbered from 0)
+    for j in `seq 3 18`;
+    do
+      expected_value=expected_values_$i[$j]
+      if [ "x${!expected_value}" != "x${cur_actual_values[$j]}" ]; then
+        echo "*** Test $i.$j - ${column_names[$j]} - \
+              (${cur_actual_values[$j]} vs ref:${!expected_value}) FAILED!"
+      return 100
+      fi
+    done
+  done
+
+  return 0
+}
+

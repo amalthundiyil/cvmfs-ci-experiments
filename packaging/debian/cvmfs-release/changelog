@@ -1,0 +1,90 @@
+cvmfs-release (4.3-1) lucid; urgency=low
+
+  * Fix bookworm repo url
+
+ -- Valentin Volkl <vavolkl@cern.ch>  Mon, 04 Sep 2023 13:20:00 +0200
+
+cvmfs-release (4.2-1) lucid; urgency=low
+
+  * Add Debian 12 "bookworm" platform
+
+ -- Valentin Volkl <vavolkl@cern.ch>  Fri, 01 Sep 2023 16:20:00 +0200
+
+cvmfs-release (4.1-1) lucid; urgency=low
+
+  * Update repository S3 mirror URL
+
+ -- Jakob Blomer <jblomer@cern.ch>  Fri, 08 Jul 2022 14:45:00 +0200
+
+cvmfs-release (4.0-1) lucid; urgency=low
+
+  * Add Ubuntu 22.04 "jammy" platform
+  * Change apt repository base URLs to S3 mirror
+
+ -- Jakob Blomer <jblomer@cern.ch>  Mon, 04 Jul 2022 23:35:00 +0200
+
+cvmfs-release (3.3-1) lucid; urgency=low
+
+  * Add Debian 11 "bullseye" platform
+
+ -- Jakob Blomer <jblomer@cern.ch>  Wed, 25 August 2021 17:25:00 +0200
+
+cvmfs-release (3.2-1) lucid; urgency=low
+
+  * Add Ubuntu 20.04 "focal" platform
+
+ -- Jakob Blomer <jblomer@cern.ch>  Tue, 23 June 2020 15:37:00 +0200
+
+cvmfs-release (3.1-1) lucid; urgency=low
+
+  * Add Debian 10 "buster" platform
+
+ -- Jakob Blomer <jblomer@cern.ch>  Tue, 01 October 2019 14:00:00 +0000
+
+cvmfs-release (3.0-1) lucid; urgency=low
+
+  * Fall back to Ubuntu 16.04 on non-LTS platforms
+
+ -- Jakob Blomer <jblomer@cern.ch>  Wed, 03 July 2019 11:00:00 +0000
+
+cvmfs-release (2.1-2) lucid; urgency=low
+
+  * Properly handle package removal and upgrades
+
+ -- Jakob Blomer <jblomer@cern.ch>  Wed, 05 December 2018 13:00:00 +0000
+
+cvmfs-release (2.1-1) lucid; urgency=low
+
+  * Add Ubuntu 18.04 Bionic repository
+
+ -- Jakob Blomer <jblomer@cern.ch>  Wed, 05 December 2018 12:00:00 +0000
+
+cvmfs-release (2.0-3) lucid; urgency=low
+
+  * Disable testing repositories by default
+
+ -- Jakob Blomer <jblomer@cern.ch>  Tue, 26 September 2017 08:00:00 +0000
+
+cvmfs-release (2.0-2) lucid; urgency=low
+
+  * Fix package control file
+
+ -- Jakob Blomer <jblomer@cern.ch>  Mon, 18 September 2017 12:00:00 +0000
+
+cvmfs-release (2.0-1) lucid; urgency=low
+
+  * Switch to using packages build for the host distribution
+
+ -- Jakob Blomer <jblomer@cern.ch>  Wed, 28 June 2017 09:00:00 +0000
+
+cvmfs-release (1.0-2) lucid; urgency=low
+
+  * Update GPG key
+
+ -- Jakob Blomer <jblomer@cern.ch>  Tue, 05 Apr 2016 12:56:00 +0000
+
+cvmfs-release (1.0-1) lucid; urgency=low
+
+  * Initial packaging
+
+ -- Jakob Blomer <jblomer@cern.ch>  Wed, 10 Feb 2016 12:00:00 +0000

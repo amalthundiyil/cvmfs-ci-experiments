@@ -1,0 +1,278 @@
+#!/bin/bash
+cvmfs_test_name="GeoIP Service"
+cvmfs_test_autofs_on_startup=false
+
+CVMFS_TEST_614_GEO_DIR=/var/lib/cvmfs-server/geo
+CVMFS_TEST_614_REPLICA_NAME=
+
+cleanup() {
+  [ -z "$CVMFS_TEST_614_REPLICA_NAME" ] || sudo cvmfs_server rmfs -f $CVMFS_TEST_614_REPLICA_NAME
+}
+
+cvmfs_getaddr() {
+  # exit after the first line in case there are multiple addresses
+  ip $1 -o addr show scope global|awk '{split($4,a,"/");print a[1];exit}'
+}
+
+# Check the results from an ordering of 3 servers.
+# When coming from *.cern.ch or *.fnal.gov, the reqorder should have the
+#  ordering of cern, fnal, and ihep that was in the request (literally 
+#  those short names).  Otherwise the reqorder should have the ording
+#  of the full dns names that were in the request.
+cvmfs_check_georesult() {
+  local result=$1
+  local from=$2
+  local reqorder=$3
+  local expectorder
+  echo "  result for $reqorder from $from is $result"
+  [ -n "$1" ] || return 1
+  if [[ "$from" == *.cern.ch ]] || [[ "$from" == *.fnal.gov ]]; then
+    local cern
+    local fnal
+    local ihep
+    local site
+    local n=1
+    for site in ${reqorder//,/ }; do
+      eval $site=$n
+      let n+=1
+    done
+    if [[ "$from" == *.cern.ch ]]; then
+      expectorder=$cern,$fnal,$ihep
+    elif [[ "$from" == *.fnal.gov ]]; then
+      expectorder=$fnal,$cern,$ihep
+    fi
+  else
+    # not testing at CERN or FNAL, so any order will do unless there's
+    #  an exact match; if so, that one should be first
+    if [[ "$reqorder" = $from,*,* ]]; then
+      expectorder="1,[23],[23]"
+    elif [[ "$reqorder" = *,$from,* ]]; then
+      expectorder="2,[13],[13]"
+    elif [[ "$reqorder" = *,*,$from ]]; then
+      expectorder="3,[12],[12]"
+    else
+      expectorder="[123],[123],[123]"
+    fi
+  fi
+  echo "  expected order is $expectorder"
+  [[ $result == $expectorder ]] || return 2
+}
+
+# Check the results from an ordering of 3 servers, a separator, and a
+#  fallback proxy.  The separator (number 4) should always be last, and
+#  the fallback proxy (number 5) should always be second to last. 
+cvmfs_check_geosepresult() {
+  local result=$1
+  local from=$2
+  local reqorder=$3
+  if [[ "$result" != *,*,*,5,4 ]]; then
+    echo "  \"$result\" does not end in ',5,4'"
+    return 3
+  fi
+  cvmfs_check_georesult "${result/,5,4/}" $from $reqorder
+}
+
+cvmfs_run_test() {
+  logfile=$1
+
+  if [ ! -d $CVMFS_TEST_614_GEO_DIR ]; then
+    echo "No geo database directory, disabled on this platform"
+    return 0
+  fi
+
+  echo "checking if both IPv4 and IPv6 addresses are available"
+  local ipv4addr="`cvmfs_getaddr -4`"
+  local ipv6addr="`cvmfs_getaddr -6`"
+  [ -n "$ipv4addr" ] || return 1
+  if [ -z "$ipv6addr" ]; then
+    echo "WARNING: No IPv6 address available, skipping IPv6 tests"
+    CVMFS_GENERAL_WARNING_FLAG=1
+  fi
+
+  local repo_dir=/cvmfs/$CVMFS_TEST_REPO
+
+  echo "create a fresh repository named $CVMFS_TEST_REPO with user $CVMFS_TEST_USER"
+  create_empty_repo $CVMFS_TEST_REPO $CVMFS_TEST_USER || return $?
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  local replica_name="$(get_stratum1_name $CVMFS_TEST_REPO)"
+
+  CVMFS_TEST_614_REPLICA_NAME=$replica_name
+  echo "install a cleanup function"
+  trap cleanup EXIT HUP INT TERM || return $?
+
+  echo "create Stratum1 repository on the same machine"
+  load_repo_config $CVMFS_TEST_REPO
+  create_stratum1 $replica_name                          \
+                  root                                   \
+                  $CVMFS_STRATUM0                        \
+                  /etc/cvmfs/keys/${CVMFS_TEST_REPO}.pub \
+                  || return 3
+
+  echo "do a snapshot to make sure geo ip database is downloaded"
+  sudo cvmfs_server snapshot $replica_name || return 4
+
+  local me="`uname -n`"
+  local api="cvmfs/$replica_name/api/v1.0/geo"
+  local sep="+PXYSEP+"
+  local cern=cvmfs-stratum-one.cern.ch
+  local fnal=cvmfs.fnal.gov
+  local ihep=cvmfs-stratum-one.ihep.ac.cn
+  local cerncdn=s1cern-cvmfs.openhtc.io
+  local fnalcdn=s1fnal-cvmfs.openhtc.io
+  local ihepcdn=s1ihep-cvmfs.openhtc.io
+  local cernbp=cvmfsbproxy.cern.ch
+  local fnalbp=cvmfsbproxy.fnal.gov
+  local ipv6=ipv6.test-ipv6.com  # only an ipv6 address
+  local other=amazon.com
+  local cdnheader="CF-Connecting-IP"
+  local result
+
+  # limit the output from curl to 5 lines so in case there's some kind
+  #   of error some useful output will show but not too much
+
+  echo "checking x-forwarded-for IPv4"
+  result="`curl -s -H "x-forwarded-for: $ipv4addr" http://localhost/$api/x/$fnal,$cern,$ihep|head -5`"
+  cvmfs_check_georesult "$result" $me fnal,cern,ihep || return 5
+
+  if [ -n "$ipv6addr" ]; then
+    echo "checking x-forwarded-for IPv6"
+    result="`curl -s -H "x-forwarded-for: $ipv6addr" http://localhost/$api/x/$ihep,$fnal,$cern|head -5`"
+    cvmfs_check_georesult "$result" $me ihep,fnal,cern || return 6
+  fi
+
+  echo "checking direct IPv4"
+  result="`curl -s http://$ipv4addr/$api/x/$cern,$ihep,$fnal|head -5`"
+  cvmfs_check_georesult "$result" $me cern,ihep,fnal || return 7
+
+  if [ -n "$ipv6addr" ]; then
+    echo "checking direct IPv6"
+    result="`curl -s -g http://[$ipv6addr]/$api/x/$fnal,$ihep,$cern|head -5`"
+    cvmfs_check_georesult "$result" $me fnal,ihep,cern || return 8
+  fi
+
+  echo "checking direct IPv4 with localhost x-forwarded-for"
+  # this can happen when the client is on the same host as a forward proxy
+  #  squid and there's no reverse proxy squid on the stratum 1
+  result="`curl -s -H "x-forwarded-for: 127.0.0.1" http://$ipv4addr/$api/x/$cern,$ihep,$fnal|head -5`"
+  cvmfs_check_georesult "$result" $me cern,ihep,fnal || return 9
+
+  echo "checking CDN IPv4"
+  result="`curl -s -H "$cdnheader: $ipv4addr" http://localhost/$api/x/$cerncdn,$fnalcdn,$ihepcdn|head -5`"
+  cvmfs_check_georesult "$result" $me cern,fnal,ihep || return 10
+
+  if [ -n "$ipv6addr" ]; then
+    echo "checking $CDN IPv6"
+    result="`curl -s -H "$cdnheader: $ipv6addr" http://localhost/$api/x/$ihepcdn,$cerncdn,$fnalcdn|head -5`"
+    cvmfs_check_georesult "$result" $me ihep,cern,fnal || return 11
+  fi
+
+  echo "checking CDN with proxy name"
+  result="`curl -s -H "$cdnheader: anything" http://localhost/$api/$fnal/$ihepcdn,$fnalcdn,$cerncdn|head -5`"
+  cvmfs_check_georesult "$result" $fnal ihep,fnal,cern || return 12
+
+  echo "checking IPv6-only server"
+  result="`curl -s http://$ipv4addr/$api/x/$ipv6,$cern,$fnal|head -5`"
+  cvmfs_check_georesult "$result" ipv6onlytest ipv6,cern,fnal || return 20
+
+  echo "checking proxy name IPv4"
+  result="`curl -s http://localhost/$api/$other/$cern,$ipv6,$other|head -5`"
+  cvmfs_check_georesult "$result" $other $cern,$ipv6,$other || return 21
+
+  echo "checking proxy name IPv6"
+  result="`curl -s http://localhost/$api/$ipv6/$ipv6,$fnal,$other|head -5`"
+  cvmfs_check_georesult "$result" $ipv6 $ipv6,$fnal,$other || return 22
+
+  echo "checking ordering from CERN fallback proxy"
+  result="`curl -s http://localhost/$api/$fnalbp/$fnal,$ihep,$cern,$sep,$cernbp|head -5`"
+  cvmfs_check_geosepresult "$result" $cernbp fnal,ihep,cern || return 23
+
+  echo "checking ordering from FNAL fallback proxy"
+  result="`curl -s http://localhost/$api/$other/$cern,$fnal,$ihep,$sep,$fnalbp|head -5`"
+  cvmfs_check_geosepresult "$result" $fnalbp cern,fnal,ihep || return 24
+
+  echo "checking parallelism and cache limit (could take several minutes)"
+  # The number of api processing threads is 64, and cache limit is 100k.
+  # We want to surpass each limit.  Surpass number of parallel threads
+  #  by a factor of 4, to 256.  Use IP addresses instead of dns names so
+  #  it doesn't actually contact the DNS.  There's 256*256 (65k) IPv4
+  #  addresses available in a class B network, so using two of them will
+  #  surpass the 100k limit.  Use the process number as part of the IP
+  #  address and also the process number with the lowest bit flipped, so
+  #  each name is used twice.
+
+  local namelookups="`curl -s http://localhost/$api/_namelookups_/`"
+  local pids procn site classb expected subn addr urls
+  local partnerprocn numresults nextexpect
+  procn=0
+  while [ $procn -lt 256 ]; do
+    (
+      let partnerprocn="$procn^1"
+      for site in cern fnal; do 
+        case $site in
+          cern)
+            classb=128.142
+            expected=1,2,3
+            ;;
+          fnal)
+            classb=131.225
+            expected=2,1,3
+            ;;
+        esac
+        subn=0
+        # send 512 urls at a time to curl; otherwise it is too slow
+        urls=""
+        while [ $subn -lt 256 ]; do
+          for lowname in procn partnerprocn; do
+            eval addr=$classb.$subn.\$$lowname
+            urls="$urls http://localhost/$api/$addr/$cern,$fnal,$ihep"
+          done
+          let subn+=1
+        done
+        curl -s $urls 2>&1 | \
+          (
+          subn=0
+          numresults=0
+          nextexpect=procn
+          while read result; do
+            eval addr=$classb.$subn.\$$nextexpect
+            if [ "$result" != "$expected" ]; then
+              echo "query on $addr failed! expected $expected, got $result"
+              return 1
+            fi
+            let numresults+=1
+            if [ $nextexpect = procn ]; then
+              nextexpect=partnerprocn
+            else
+              nextexpect=procn
+              let subn+=1
+            fi
+          done
+          if [ $numresults -ne 512 ]; then
+            echo "expected 512 results in proc $procn for $classb, got $numresults"
+            return 1
+          fi
+          ) || return 1
+      done
+    ) &
+    pids="$pids $!"
+    let procn=$procn+1
+  done
+  local pid numfail
+  numfail=0
+  for pid in $pids; do
+    # wait individually in order to check the return codes
+    wait $pid || let numfail+=1
+  done
+  let namelookups="`curl -s http://localhost/$api/_namelookups_/` - $namelookups"
+  echo "number of name lookups done in test: $namelookups"
+  if [ $numfail = 0 ]; then
+    echo "parallelism test completed successfully"
+  else
+    echo "$numfail procs failed"
+    return 30
+  fi
+
+  return 0
+}

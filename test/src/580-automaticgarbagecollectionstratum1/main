@@ -1,0 +1,184 @@
+#!/bin/bash
+
+cvmfs_test_name="Automatic Garbage Collection on Stratum 1"
+cvmfs_test_autofs_on_startup=false
+cvmfs_test_suites="quick"
+
+unix_timestamp() {
+  date +%s
+}
+
+CVMFS_TEST_580_LAST_PUBLISH=last_publish
+
+create_revision() {
+  local repo_name=$1
+  local publish_log="$(mktemp ./publish.log.XXXXX)"
+
+  start_transaction $repo_name > /dev/null 2>&1    || return 1
+  publish_repo      $repo_name > $publish_log 2>&1 || return 2
+  unix_timestamp > $CVMFS_TEST_580_LAST_PUBLISH
+
+  echo "$(get_current_root_catalog $repo_name)C"
+}
+
+CVMFS_TEST_580_REPLICA_NAME=""
+cleanup() {
+  echo "*** running cleanup()"
+  if [ ! -z $CVMFS_TEST_580_REPLICA_NAME ]; then
+    sudo cvmfs_server rmfs -f $CVMFS_TEST_580_REPLICA_NAME
+  fi
+}
+
+cvmfs_run_test() {
+  local logfile=$1
+  local script_location=$2
+  local scratch_dir=$(pwd)
+  local repo_dir=/cvmfs/$CVMFS_TEST_REPO
+
+  local root_catalog0=""
+  local root_catalog1=""
+  local root_catalog2=""
+  local root_catalog3=""
+  local root_catalog4=""
+
+  echo "*** create a fresh repository named $CVMFS_TEST_REPO with user $CVMFS_TEST_USER and disabled auto-tagging ($(display_timestamp now))"
+  create_empty_repo $CVMFS_TEST_REPO $CVMFS_TEST_USER NO -g -z || return $?
+  root_catalog0="$(get_current_root_catalog $CVMFS_TEST_REPO)C"
+  cvmfs_server tag -l $CVMFS_TEST_REPO || return 3
+
+  echo "*** disable automatic garbage collection on stratum 0"
+  disable_auto_garbage_collection $CVMFS_TEST_REPO || return $?
+
+  echo "*** register cleanup trap"
+  trap cleanup EXIT HUP INT TERM || return $?
+
+  echo "*** create a stratum1 replication (with enabled auto garbage collection)"
+  replica_name="$(get_stratum1_name $CVMFS_TEST_REPO)"
+  CVMFS_TEST_580_REPLICA_NAME="$replica_name"
+  load_repo_config $CVMFS_TEST_REPO
+  create_stratum1 $replica_name                          \
+                  $CVMFS_TEST_USER                       \
+                  $CVMFS_STRATUM0                        \
+                  /etc/cvmfs/keys/${CVMFS_TEST_REPO}.pub \
+                  -z || return 4
+
+  echo "*** create an initial snapshot"
+  cvmfs_server snapshot $replica_name || return 5
+
+  echo "*** check if initial catalog is there (stratum 0)"
+  peek_backend $CVMFS_TEST_REPO $root_catalog0 || return 6 # just created
+
+  echo "*** check if initial catalog is there (stratum 1)"
+  peek_backend $replica_name $root_catalog0 || return 7
+
+  echo "*** configure stratum 1 to automatically delete all untagged revisions"
+  local replica_server_conf="/etc/cvmfs/repositories.d/${replica_name}/server.conf"
+  echo "CVMFS_AUTO_GC_TIMESPAN=tomorrow" | sudo tee --append $replica_server_conf || return 8
+  cat $replica_server_conf || return 9
+
+  echo "*** create revision 1 ($(display_timestamp now))"
+  root_catalog1="$(create_revision $CVMFS_TEST_REPO)"
+
+  echo "*** create snapshot of revision 1 (gc should not run yet)"
+  cvmfs_server snapshot $replica_name || return 10
+  cvmfs_server tag -l $CVMFS_TEST_REPO || return 11
+
+  echo "*** check repository integrity"
+  check_repository $CVMFS_TEST_REPO -i || return 12
+  check_repository $replica_name -i    || return 13
+
+  echo "*** check catalogs"
+  peek_backend $CVMFS_TEST_REPO $root_catalog0 || return 14 # trunk-previous
+  peek_backend $CVMFS_TEST_REPO $root_catalog1 || return 15 # trunk
+  peek_backend $replica_name    $root_catalog0 || return 16 # trunk-previous
+  peek_backend $replica_name    $root_catalog1 || return 17 # trunk
+
+  echo "*** create revision 2 ($(display_timestamp now))"
+  root_catalog2="$(create_revision $CVMFS_TEST_REPO)"
+
+  echo "*** create snapshot of revision 2"
+  cvmfs_server snapshot $replica_name || return 18
+
+  echo "*** check repository integrity"
+  check_repository $CVMFS_TEST_REPO -i || return 20
+  check_repository $replica_name -i    || return 21
+
+  echo "*** check catalogs"
+  peek_backend $CVMFS_TEST_REPO $root_catalog0 || return 22 # no auto GC
+  peek_backend $CVMFS_TEST_REPO $root_catalog1 || return 23 # trunk-previous
+  peek_backend $CVMFS_TEST_REPO $root_catalog2 || return 24 # trunk
+  peek_backend $replica_name    $root_catalog0 || return 25 # GC not yet run
+  peek_backend $replica_name    $root_catalog1 || return 26 # trunk-previous
+  peek_backend $replica_name    $root_catalog2 || return 27 # trunk
+
+  echo "*** always run gc with snapshot"
+  local server_s1_conf=/etc/cvmfs/repositories.d/$replica_name/server.conf
+  echo "CVMFS_AUTO_GC_LAPSE='tomorrow'" | sudo tee -a $server_s1_conf || return 19
+
+  echo "*** create revision 3 ($(display_timestamp now))"
+  root_catalog3="$(create_revision $CVMFS_TEST_REPO)"
+
+  echo "*** create snapshot of revision 3"
+  cvmfs_server snapshot $replica_name || return 28
+  cvmfs_server tag -l $CVMFS_TEST_REPO || return 29
+
+  echo "*** check repository integrity"
+  check_repository $CVMFS_TEST_REPO -i || return 30
+
+  echo "*** check catalogs"
+  peek_backend $CVMFS_TEST_REPO $root_catalog0 || return 31 # no auto GC
+  peek_backend $CVMFS_TEST_REPO $root_catalog1 || return 32 # no auto GC
+  peek_backend $CVMFS_TEST_REPO $root_catalog2 || return 33 # trunk-previous
+  peek_backend $CVMFS_TEST_REPO $root_catalog3 || return 34 # trunk
+  peek_backend $replica_name    $root_catalog0 && return 35 # GC'ed
+  peek_backend $replica_name    $root_catalog1 && return 36 # GC'ed
+  peek_backend $replica_name    $root_catalog2 || return 37 # trunk-previous
+  peek_backend $replica_name    $root_catalog3 || return 38 # trunk
+
+  echo "*** disable automatic garbage collection on stratum 1"
+  disable_auto_garbage_collection $replica_name || return $?
+
+  echo "*** create revision 4"
+  root_catalog4="$(create_revision $CVMFS_TEST_REPO)"
+
+  echo "*** create snapshot of revision 4"
+  cvmfs_server snapshot $replica_name || return 70
+  cvmfs_server tag -l $CVMFS_TEST_REPO || return 71
+
+  echo "*** check repository integrity"
+  check_repository $CVMFS_TEST_REPO -i || return 72
+  check_repository $replica_name -i    || return 73
+
+  echo "*** check catalogs"
+  peek_backend $CVMFS_TEST_REPO $root_catalog0 || return 74 # no auto GC
+  peek_backend $CVMFS_TEST_REPO $root_catalog1 || return 75 # no auto GC
+  peek_backend $CVMFS_TEST_REPO $root_catalog2 || return 76 # no auto GC
+  peek_backend $CVMFS_TEST_REPO $root_catalog3 || return 77 # trunk-previous
+  peek_backend $CVMFS_TEST_REPO $root_catalog4 || return 78 # trunk
+  peek_backend $replica_name    $root_catalog0 && return 81 # GC'ed
+  peek_backend $replica_name    $root_catalog1 && return 82 # GC'ed
+  peek_backend $replica_name    $root_catalog2 || return 83 # no auto GC
+  peek_backend $replica_name    $root_catalog3 || return 84 # trunk-previous
+  peek_backend $replica_name    $root_catalog4 || return 85 # trunk
+
+  echo "*** run a manual garbage collection (delete all but last two) on stratum 1"
+  cvmfs_server gc -r0 -f $replica_name || return 88
+
+  echo "*** check repository integrity"
+  check_repository $CVMFS_TEST_REPO -i || return 89
+  check_repository $replica_name -i    || return 90
+
+  echo "*** check catalogs"
+  peek_backend $CVMFS_TEST_REPO $root_catalog0 || return  91 # no auto GC
+  peek_backend $CVMFS_TEST_REPO $root_catalog1 || return  92 # no auto GC
+  peek_backend $CVMFS_TEST_REPO $root_catalog2 || return  93 # no auto GC
+  peek_backend $CVMFS_TEST_REPO $root_catalog3 || return  94 # trunk-previous
+  peek_backend $CVMFS_TEST_REPO $root_catalog4 || return  95 # trunk
+  peek_backend $replica_name    $root_catalog0 && return  98 # GC'ed
+  peek_backend $replica_name    $root_catalog1 && return  99 # GC'ed
+  peek_backend $replica_name    $root_catalog2 && return 100 # manually GC'ed
+  peek_backend $replica_name    $root_catalog3 || return 101 # trunk-previous
+  peek_backend $replica_name    $root_catalog4 || return 102 # trunk
+
+  return 0
+}

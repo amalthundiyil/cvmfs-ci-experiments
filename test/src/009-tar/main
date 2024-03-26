@@ -1,0 +1,36 @@
+#!/bin/bash
+
+cvmfs_test_name="Tar Linux Kernel"
+
+cvmfs_run_test() {
+  logfile=$1
+
+  cvmfs_mount sft.cern.ch || return 1
+
+  local linux_source
+  linux_source=/cvmfs/sft.cern.ch/lcg/external/experimental/linux/linux-2.6.32.57
+
+  echo "*** Taring $linux_source with COLD cache"
+  # Avoid ._* files on macOS
+  COPYFILE_DISABLE=y tar cf kernel.tar $linux_source || return 2
+  local digest_cold
+  digest_cold=$(md5sum kernel.tar | awk '{print $1}')
+  rm -f kernel.tar
+
+  echo "*** Taring $linux_source with WARM cache"
+  # Avoid ._* files on macOS
+  COPYFILE_DISABLE=y tar cf kernel.tar $linux_source || return 3
+  local digest_warm
+  digest_warm=$(md5sum kernel.tar | awk '{print $1}')
+  rm -f kernel.tar
+
+  if [ "x$digest_cold" != "x$digest_warm" ]; then
+    echo "Digest mismatch: $digest_cold $digest_warm"
+    return 4
+  fi
+
+  check_memory sft.cern.ch 75000
+
+  return 0
+}
+

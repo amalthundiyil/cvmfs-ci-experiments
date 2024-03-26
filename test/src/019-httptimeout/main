@@ -1,0 +1,73 @@
+#!/bin/bash
+
+cvmfs_test_name="HTTP Timeout"
+
+do_faulty_mount() {
+  cvmfs_mount "atlas.cern.ch"          \
+              "CVMFS_TIMEOUT=3"        \
+              "CVMFS_TIMEOUT_DIRECT=3" \
+              "CVMFS_HTTP_PROXY=DIRECT" \
+              "CVMFS_MAX_RETRIES=0"
+}
+
+CVMFS_TEST_019_SILENT_PID=
+cleanup() {
+  echo "running cleanup()"
+  [ -z $CVMFS_TEST_019_SILENT_PID ] || sudo kill $CVMFS_TEST_019_SILENT_PID
+  cvmfs_enable_config_repository
+}
+
+cvmfs_run_test() {
+  logfile=$1
+  local scratch_dir=$(pwd)
+  local retcode=0
+  local seconds=100
+  local http_pid=0
+  local http_port=8019
+  local retval=0
+
+  echo "restarting autofs"
+  autofs_switch off || return 10
+  autofs_switch on  || return 11
+
+  echo "configure cvmfs with an unreachable and an unresponsive host"
+  sudo sh -c "echo \"CVMFS_SERVER_URL=\\\"http://127.0.1.2:8080;http://127.0.0.1:${http_port}/@org@;http://cvmfs-stratum-one.cern.ch/opt/@org@\\\"\" > /etc/cvmfs/domain.d/cern.ch.local" || return 1
+
+  cvmfs_disable_config_repository
+
+  echo "install a disaster cleanup"
+  trap cleanup EXIT HUP INT TERM || return $?
+
+  echo "run a silent HTTP server"
+  CVMFS_TEST_019_SILENT_PID=$(open_silent_port TCP $http_port $logfile)
+  if [ $? -ne 0 ]; then return 2; fi
+  echo "silent server started with PID $CVMFS_TEST_019_SILENT_PID"
+
+  echo "try to mount cvmfs"
+  milliseconds=$(stop_watch do_faulty_mount)
+  echo "timeout was $milliseconds seconds"
+
+  echo "try to list the repository"
+  ls /cvmfs/atlas.cern.ch || retval=3
+
+  echo "checking host chain"
+  sudo cvmfs_talk -i atlas.cern.ch host probe || retval=4
+  sudo cvmfs_talk -i atlas.cern.ch host info | grep 127.0.1.2 | grep -q "host down"
+  local h1=$?
+  sudo cvmfs_talk -i atlas.cern.ch host info | grep 127.0.0.1 | grep -q "host down"
+  local h2=$?
+  sudo cvmfs_talk -i atlas.cern.ch host info
+
+  [ $h1 -eq 0 ] && [ $h2 -eq 0 ] || retval=5
+
+  sudo rm -f /etc/cvmfs/domain.d/cern.ch.local || retval=6
+
+  # Three extra seconds for measurement uncertainties.
+  local expected_delay=$((2000*3000 + 3000))
+  if [ $milliseconds -gt $expected_delay ]; then
+    echo "mounting took too long with $milliseconds seconds (expected $expected_delay)"
+    CVMFS_TIME_WARNING_FLAG=1
+  fi
+
+  return $retval
+}

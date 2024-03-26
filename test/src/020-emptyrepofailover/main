@@ -1,0 +1,75 @@
+#!/bin/bash
+
+cvmfs_test_name="Failover on 404"
+cvmfs_test_suites="quick"
+
+do_faulty_mount() {
+  cvmfs_mount "atlas.cern.ch"          \
+              "CVMFS_TIMEOUT=3"        \
+              "CVMFS_TIMEOUT_DIRECT=3" \
+              "CVMFS_HTTP_PROXY=DIRECT"
+}
+
+
+CVMFS_TEST_020_HTTP_PID=
+cleanup() {
+  echo "running cleanup()"
+  [ -z $CVMFS_TEST_020_HTTP_PID ] || sudo kill $CVMFS_TEST_020_HTTP_PID
+}
+
+cvmfs_run_test() {
+  logfile=$1
+  local scratch_dir=$(pwd)
+  local http_pid
+  local cmd
+  local retval=0
+
+  echo "restarting autofs"
+  autofs_switch off || return 10
+  autofs_switch on  || return 11
+
+  local http_log="${scratch_dir}/http.log"
+  local http_port=8020
+  local http_url="http://127.0.0.1:$http_port"
+
+  echo "configure cvmfs with a host serving an empty directory"
+  sudo sh -c "echo \"CVMFS_SERVER_URL=\\\"${http_url}/@org@;http://cvmfs-stratum-one.cern.ch/opt/@org@\\\"\" > /etc/cvmfs/domain.d/cern.ch.local" || return 1
+
+  echo "create the empty directory to be served"
+  mkdir -p empty || return 1
+  cd empty       || return 2
+
+  echo "install a desaster cleanup"
+  trap cleanup EXIT HUP INT TERM || return $?
+
+  echo "start an HTTP server to serve external files (logging to $http_log)"
+  CVMFS_TEST_020_HTTP_PID="$(open_http_server ${scratch_dir}/empty $http_port $http_log)"
+  [ ! -z $CVMFS_TEST_020_HTTP_PID ] && kill -0 $CVMFS_TEST_020_HTTP_PID || { echo "fail"; return 3; }
+  echo "HTTP server running with PID $CVMFS_TEST_020_HTTP_PID"
+
+  echo "try to mount cvmfs"
+  local milliseconds=$(stop_watch do_faulty_mount)
+
+  echo "try to list the repository"
+  ls /cvmfs/atlas.cern.ch || retval=4
+  if [ $retval -eq 4 ]; then
+    cat_syslog | tail -n 100
+  fi
+
+  echo "checking host chain"
+  sudo cvmfs_talk -i atlas.cern.ch host probe || retval=5
+  sudo cvmfs_talk -i atlas.cern.ch host info | grep 127.0.0.1 | grep -q "host down"
+  local h1=$?
+  sudo cvmfs_talk -i atlas.cern.ch host info
+  [ $h1 -eq 0 ] || retval=6
+
+  sudo rm -f /etc/cvmfs/domain.d/cern.ch.local || retval=7
+
+  local expected_max=6000
+  if [ $milliseconds -gt $expected_max ]; then
+    echo "mounting took too long with $milliseconds seconds (expected $expected_max)"
+    CVMFS_TIME_WARNING_FLAG=1
+  fi
+
+  return $retval
+}

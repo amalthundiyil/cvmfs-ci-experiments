@@ -1,0 +1,94 @@
+#!/bin/bash
+cvmfs_test_name="Populate Repository"
+cvmfs_test_autofs_on_startup=false
+cvmfs_test_suites="quick"
+
+CVMFS_TEST500_LONG_REPONAME=
+
+produce_files_in() {
+	local working_dir=$1
+
+	pushdir $working_dir
+
+	echo "meaningless file content" > file
+	echo "more clever file content" > clever
+
+	echo "utf-8 content: 🐒❤🦁 in utf-8 path" > 🦁❤🐒
+
+	mkdir foo
+	mkdir bar
+
+	mkdir foo/bar
+	mkdir bar/foo
+
+	ln file hardlinkToFile
+	ln -s clever symlinkToClever
+
+	popdir
+}
+
+cleanup() {
+  if [ "x$CVMFS_TEST500_LONG_REPONAME" != "x" ]; then
+    destroy_repo testrepo.osg-software-2580-el7-cvmfs-stratum-0.novalocal.crt
+  fi
+}
+
+cvmfs_run_test() {
+  logfile=$1
+  local repo_dir=/cvmfs/$CVMFS_TEST_REPO
+
+  local scratch_dir=$(pwd)
+  mkdir reference_dir
+  local reference_dir=$scratch_dir/reference_dir
+
+  echo "create a fresh repository named $CVMFS_TEST_REPO with user $CVMFS_TEST_USER"
+  create_empty_repo $CVMFS_TEST_REPO $CVMFS_TEST_USER || return $?
+
+  echo "starting transaction to edit repository"
+  start_transaction $CVMFS_TEST_REPO || return $?
+
+  echo "*** checking transaction retries"
+  cvmfs_server transaction $CVMFS_TEST_REPO
+  # Expect EEXIST
+  [ $? -eq 17 ] || return 30
+  cvmfs_server transaction -t 0 $CVMFS_TEST_REPO &
+  local pid_txn=$!
+  sleep 2
+  abort_transaction $CVMFS_TEST_REPO || return 31
+  wait $pid_txn || return 32
+
+  echo "putting some stuff in the new repository"
+  produce_files_in $repo_dir || return 3
+
+  echo "putting exactly the same stuff in the scratch space for comparison"
+  produce_files_in $reference_dir || return 4
+
+  echo "creating CVMFS snapshot"
+  publish_repo $CVMFS_TEST_REPO || return $?
+
+  echo "compare the results of cvmfs to our reference copy"
+  compare_directories $repo_dir $reference_dir $CVMFS_TEST_REPO || return $?
+
+  echo "check catalog and data integrity"
+  check_repository $CVMFS_TEST_REPO -i  || return $?
+
+  echo "*** Maximum repository name with 60 characters (CVM-1173)"
+  CVMFS_TEST500_LONG_REPONAME=testrepo.osg-software-2580-el7-cvmfs-stratum-0.novalocal.crt
+  trap cleanup TERM HUP INT EXIT
+  create_empty_repo $CVMFS_TEST500_LONG_REPONAME $CVMFS_TEST_USER || return $?
+
+  echo "*** Too long name should not pass"
+  create_empty_repo "X$CVMFS_TEST500_LONG_REPONAME" $CVMFS_TEST_USER && return 10
+
+  destroy_repo $CVMFS_TEST500_LONG_REPONAME || return $?
+  CVMFS_TEST500_LONG_REPONAME=
+
+  echo "*** Repo name mix-up (CVM-1899)"
+  create_empty_repo repo-test.example.org $CVMFS_TEST_USER || return 20
+  create_empty_repo repo.test.example.org $CVMFS_TEST_USER || return 21
+  destroy_repo repo.test.example.org || return 22
+  destroy_repo repo-test.example.org || return 23
+
+  return 0
+}
+

@@ -1,0 +1,94 @@
+#!/bin/bash
+cvmfs_test_name="Notification system"
+cvmfs_test_autofs_on_startup=false
+cvmfs_test_suites="quick"
+
+NOTIFICATION_SERVER_URL="http://localhost:4929/api/v1"
+CVMFS_TEST_900_MOUNTPOINT=
+
+clean_up() {
+    echo "Cleaning up"
+    if [ "x$CVMFS_TEST_900_MOUNTPOINT" != "x" ]; then
+      sudo umount $CVMFS_TEST_900_MOUNTPOINT
+      sudo rmdir $CVMFS_TEST_900_MOUNTPOINT
+      sudo rm -rf "${CVMFS_TEST_900_MOUNTPOINT}c"
+    fi
+}
+
+private_mount() {
+  local mntpnt="$1"
+  CVMFS_TEST_900_MOUNTPOINT="$mntpnt"
+  do_local_mount "$mntpnt"          \
+                 "$CVMFS_TEST_REPO" \
+                 "$(get_repo_url $CVMFS_TEST_REPO)" \
+                 "" \
+                 "CVMFS_NOTIFICATION_SERVER=${NOTIFICATION_SERVER_URL}" || return 1
+}
+
+publish_and_notify() {
+    sudo cvmfs_server transaction $CVMFS_TEST_REPO
+    echo "Test" > /cvmfs/$CVMFS_TEST_REPO/marker.txt
+    sudo cvmfs_server publish $CVMFS_TEST_REPO
+
+    cvmfs_swissknife notify -p \
+        -u $NOTIFICATION_SERVER_URL \
+        -r http://localhost/cvmfs/$CVMFS_TEST_REPO
+}
+
+run_standalone_tests() {
+    set_up_repository_gateway
+
+    create_empty_repo $CVMFS_TEST_REPO $CVMFS_TEST_USER || return $?
+
+    publish_and_notify
+
+    if [ "x$?" != "x0" ]; then
+        echo "Could not publish manifest to notification server"
+        return 1
+    fi
+
+    # Run the subscriber tool
+    local rev1=$(cvmfs_swissknife notify -s \
+        -u $NOTIFICATION_SERVER_URL \
+        -t $CVMFS_TEST_REPO | head -1 | awk '{print $NF}' | cut -c1)
+    echo "Repository is now at revision: $rev1"
+
+    if [ $((rev1)) -lt 3 ]; then
+        echo "Repository revision $rev should be > 2"
+        return 2
+    fi
+}
+
+cvmfs_run_test() {
+  logfile=$1
+  local scratch_dir="$(pwd)"
+
+  trap clean_up EXIT HUP INT TERM || return $?
+
+  run_standalone_tests || return $?
+
+  local mntpnt="${scratch_dir}/private_mnt"
+  echo "*** mount private mount point"
+  private_mount $mntpnt || return 20
+  ls $CVMFS_TEST_900_MOUNTPOINT || return 21
+
+  local rev_before=$(attr -qg revision $CVMFS_TEST_900_MOUNTPOINT)
+  echo "*** mounted revision $rev_before"
+  echo "*** Micro Syslog"
+  cat ${CVMFS_TEST_900_MOUNTPOINT}.log
+  echo "***"
+  local nbefore=$(grep "NotificationClient - repository $CVMFS_TEST_REPO is now at revision" \
+    ${CVMFS_TEST_900_MOUNTPOINT}.log | wc -l)
+
+  publish_and_notify
+  sleep 2
+  echo "*** Micro Syslog"
+  cat ${CVMFS_TEST_900_MOUNTPOINT}.log
+  echo "***"
+  local nafter=$(grep "NotificationClient - repository $CVMFS_TEST_REPO is now at revision" \
+    ${CVMFS_TEST_900_MOUNTPOINT}.log | wc -l)
+  [ $nafter -gt $nbefore ] || return 30
+
+  return 0
+}
+

@@ -1,0 +1,1787 @@
+2.12.0:
+  * [server]  Remove 'trusted certs' (#3539)
+  * [server] Fix race when publishing to a gateway (#3546)
+  * [client] Move getxattr check of valid return value closer to its request (#3516)
+  * [client] Improve error logging in inode tracker (#3502)
+  * [client] Fix a few Log2Histogram bugs (#3511)
+  * [client] Reduce write lock contention in catalog mgr (#3476)
+  * [client] Support for the new CVMFS_FUSE3_IDLE_THREADS and CVMFS_FUSE3_MAX_THREADS parameters (#3505)
+  * [client] Log JobInfo object id and its respective CURL requests (#3492)
+  * [server] Consistently use 64bit ints for catalog revision (#3478)
+  * [client] Avoid possible race in mount helper (#3475)
+  * [client] Add paging to xattr (#3355)
+  * [server] Ingest Tarball now with modifiyable ownership (#3362)
+  * [client] Refactoring of file catalog reloads (#3156)
+
+2.11.2:
+  * [client] Fix mount helper race condition causing spurious directories (#3430)
+  * [client] Suppress CVMFS_NFILES check for refcounted cache manager (#3426)
+  * [deb] Let cvmfs-fuse3 depend on cvmfs of same version (#3421)
+  * [rpm] Match subpackage release in addition to version (#3422)
+  * [client] Fix corrupted paths for concurrent external file requests (#3418)
+
+2.11.1:
+  * [client] Fix race condition on concurrent mounts (#3393)
+  * [config] Fix client reload if remote config repo is unavailable (#3390)
+  * [rpm] Patch out the git build dependency of pacparser (#3376)
+  * [rpm] Add Debian 12 bookworm to cvmfs-release
+  * [rpm] Limit initscripts dependency to rhel <=7 (#3408)
+
+2.11.0:
+  * [client] Allow change to/from debug mode during cvmfs_config reload (#2897, #3359)
+  * [client] Re-use the file descriptor for a file already open in the local cache (#3067)
+  * [client] Support latest signature of fuse_lowlevel_notify_expire_entry (#3352)
+  * [client] Placeholder for custom proxy health check and sharding policy (#3095)
+  * [client] Custom http tracing headers (#3094)
+  * [client] Use http client auth only if membership is set (#3333)
+  * [gw] Fix publication of uncompressed files through gateway (#3338)
+  * [client] Add curl debug info to debug log (#3329)
+  * [server] Verify meta-info object in cvmfs_server check (#3139)
+  * [client] Allow CPU affinity setting through CVMFS_CPU_AFFINITY (#3330)
+  * [server] Fix deadlock in uploading pipeline (#3195)
+  * [gw] Fix transaction abort after gateway restart (#3128)
+  * [gw] Fix occasional lease contention errors (#3259, #3077, #3272)
+  * [client] Check for writable log file directories in chkconfig (#3310)
+  * [server] Restrict error handling of readahead (#3305)
+  * [client] Fix tmpfs recognition to skip readahead (#3316)
+  * [client] Add development option _CVMFS_DEVEL_IGNORE_SIGNATURE_FAILURES (#3317)
+  * [client] Add streaming cache mode through CVMFS_STREAMING_CACHE=yes (#3263, #2948)
+  * [client] Use dedicated log files for mount helper (#3314)
+  * [client] Warn about potential incorrect use of cvmfs_talk (#3303)
+  * [gc] Extend grep filter to accept microsecond precision in tags (#3301)
+  * [client] Use logging settings in mount helper (#2962)
+  * [client] Fix race in signal handling when authz helper is started (#3211)
+  * [server] Fix race in parallel catalog traversal (#3171)
+  * If CVMFS_SUPPRESS_ASSERTS is defined, keep retrying memory allocation on failure (#3244)
+  * [server] Fix force abort after client crash (#3283)
+  * Add proxy_list and proxy_list_external magic xattrs (#3233)
+  * [client] Error out early if certificate is invalid (#3238)
+  * [client] Improve watchdog startup procedure (#3089)
+  * [gc] Avoid duplicate delete requests (#3117)
+  * Fix mount helper so that it works with libfuse3 auto_unmount (#3143)
+  * Enable core file generation if watchdog is disabled (#3142)
+  * Fix closing of file descriptors for very large nfiles limit (#3158)
+  * Add AssertOrLog to conditionally continue on certain fatal errors (#3157)
+  * [client] Add telemetry framework to send performance counters to influx (#3096)
+  * [macOS] Fix xattr on symlinks (#3170)
+  * [client] Add support for evicting chunked files through cvmfs_talk (#3122)
+  * [client] Add support for symlink kernel cache through CVMFS_CACHE_SYMLINKS (#2949)
+  * [rpm] Bump base for service container to EL9
+  * [s3] Add support for CVMFS_S3_X_AMZ_ACL server parameter (#2970)
+  * Add support for protected xattrs, new client parameters
+    CVMFS_XATTR_[PRIVILEGED_GIDS,PROTECTED_XATTRS] (#3103)
+  * [client] Improve logging of I/O errors (#2941)
+  * [gw] Store publisher hostname in lease (#3130)
+  * [client] Make CVMFS_ARCH env available for variant symlinks (#3127, CVM-910)
+  * Add user.external_url extended attribute (#3101)
+  * [rpm] Change libcvmfs static library to libcvmfs_client shared library (#3113)
+  * [gw] Add HTTPS support for connecting to gateway (#3060)
+  * [client] Add CVMFS_WORLD_READABLE client option (#3115)
+  * [rpm] Let client depend on cvmfs-libs (#3107)
+  * [rpm] Bump libcurl to version 7.86.0 (#3093)
+  * [client] Gracefully handle CURLE_SEND_ERROR in download manager (#2925)
+  * [client] Add CVMFS_STATFS_CACHE_TIMEOUT parameter to cache statfs results (#3015)
+  * Restrict ShortString overflow counters to debug mode (#3081)
+  * [S3] Gracefully handle HTTP 500 return codes during upload (#2912)
+
+2.10.2:
+  * [gw] fix for a concurrency issue in the leases db
+  * Fix locale setting in cvmfs_server (#3237)
+
+2.10.1:
+  * Check object existance only once in cvmfs_server check (#3138)
+  * Fix overflow of logbuffer xattr with very long log lines (#2979)
+  * Limit parallel cvmfs_server snapshot -a commands (#3064)
+  * Let cvmfs_server abort -f succeed even if session token is missing (#3159)
+  * Update individual cvmfs_server check status when successful (#3147)
+  * [geo] Allow for missing location info in geo record (#3186)
+  * [container] Fix importing of images with OCI manifest list (#3164)
+  * Improve file reset logic on download retries (#3085)
+  * Improve "mount transfer" syslog message (#2956)
+  * Fix false recreation of the reflog in cvmfs_server check (#3123)
+  * Fix SQlite NFS maps initialization (#3150)
+  * Restore ability of cvmfs_server abort -f to survive invalid lease (#3088)
+  * Ignore /afs in cvmfs_config fuser (#3090)
+  * Fix building leveldb external with non-GNU patch (#3110)
+  * [rpm] Fix python build requirements (#2986)
+
+2.10.0:
+  * [server] Ignore size of directories in snapshot diff output
+  * [server] Remove partial support for "channels" from manifest (#2838)
+  * [server] Fix counting of open file descriptors
+  * [ducc] Support images with OCI manifest (#2851)
+  * [server] Fix ingestion (with catalog) of empty tarfile (#3055)
+  * [client] Gracefully handle open, changing files (CVM-2001)
+  * [ducc] Add support for container registry proxies through
+    DUCC_<REGISTRY_NAME>_PROXY (#2893)
+  * Add catalog hash to catalog_counters xattr (#2900)
+  * Fix fuse callback latency measurement (#3025)
+  * [server] Use libressl crypto on server
+  * Bump libressl to version 3.5.3
+  * Fix compile warnings for cxx17 (#3014)
+  * Add cvmfs-libs package containing libcvmfs_util, libcvmfs_crypto
+  * [server] Work around openssl signature issues on EL9 (#2990)
+  * [client] Diagnose errors due to changing file type (#2834)
+  * [server] Catch unexpected errors in transaction command (#3004)
+  * [server] Avoid double-slash URLs in HTTP HEAD requests (#2989)
+  * Cancel network fail-over cycle when fuse request is canceled (#2983)
+  * Update c-ares to version 1.18.1 (#2977)
+  * [gw] Remove too strict repository name check (#2973)
+  * Fix minor memory leak during reload (#2976)
+  * Fix race in the startup of the shared cache manager in debug mode (#2910)
+  * Fix creation of stratum 1 from https stratum 0 (#2974)
+  * Update sqlite to version 3.38.2
+  * [rpm] Add /var/log/cvmfs to cvmfs-server including SELinux label (CVM-2070)
+  * Improve use of page cache (#2879)
+  * Updated Pacparser to version 1.3.8 and fixes for macOS > 10.15 (#2963)
+  * Add OS version to meta.json (PR #2863)
+  * Change default magic xattr visibility to "rootonly"
+  * Add support for sharding proxies support with new client option
+    CVMFS_PROXY_SHARD={yes|no} (CVM-2060)
+
+2.9.4:
+  * Fix packaging on Ubuntu 22.04 (#2987)
+
+2.9.3:
+  * Fix releasing of GC lock (#2982)
+  * Improve robustness of link between watchdog and fuse module (#2971)
+
+2.9.2:
+  * GO 1.18 is bundled as an external depedency, facilitating building on
+    older platforms (#2867)
+
+2.9.1:
+  * Fix build for CentOS Stream 9 (#2862)
+  * Improve error reporting in watchdog process (#2859)
+  * Fix potential use-after-free error in swissknife check (#2860)
+  * Fix conflict in commandline arguments of cvmfs_ducc (#2853)
+  * Running cvmfs_server check -a and gc -a is now mutually exclusive
+    (CVM-2043)
+  * Enable external monitoring of geodb updates, add the CVMFS_GEO_AUTO_UPDATE
+    option (CVM-1857)
+  * Ignore trailing path after repo name in `cvmfs_server abort` (CVM-2055)
+  * New option to list magic xattrs on root node only (CVM-2058)
+  * Fix integrity check for external chunked files (CVM-2050)
+  * Fix for GeoAPI and Python3 (CVM-2052)
+  * Fix initialization of upstream type in cvmfs_server ingest (#2816)
+  * Fix bug where trailing slash in base dir crashes tarball ingest (CVM-2044)
+
+2.9.0:
+  * Add initial implementation of cvmfs_publish commit (CVM-2029)
+  * [libcvmfs_server] Require repo key & certificate only on non-gw publishers
+  * [gw] Fix spurious keychain warning on transaction (CVM-1982)
+  * Add `cvmfs_server check -a` command (CVM-1524)
+  * Add timestamp_last_error magic extended attribute (CVM-2003)
+  * Add logbuffer magic extended attribute
+  * Add check for usyslog writability in cvmfs_config (CVM-1946)
+  * [ducc] make output_format line in wish list optional (CVM-1786)
+  * [gw] Fix lease statistics extraction during commit (CVM-1939)
+  * [ducc] Add support for publish triggered by registry webhooks (CVM-2000)
+  * [rpm] Cleanup creation of cvmfs system user and group (CVM-2017)
+  * Clean up receiver processes when stopping the gateway (CVM-1989)
+  * Add support for importing repositories on S3
+  * [gw] Increase file descriptor limit for receiver (CVM-1997)
+  * Classify HTTP errors with X-Squid-Error or Proxy-Status headers
+    as proxy errors
+  * Use UTC timestamp for .cvmfs_is_snapshotting (CVM-1986)
+  * [rpm] Remove version requirement from selinux-policy dependency
+  * Fix cvmfs_talk host info for empty host chain (CVM-2023)
+  * [ducc] Fix access to authenticated registries
+  * Add 'cvmfs_config setup noautofs' option (CVM-1983)
+  * Add support for explicit server-side proxy, removing support for
+    server-side system proxy; new parameters CVMFS_SERVER_PROXY and
+    CVMFS_S3_PROXY
+  * Fix potential activation of corruption stratum 1 snapshot
+  * Add `cvmfs_config fuser` command
+  * Add support for HTTPS S3 endpoints
+  * Fix union mountpoint handling on Fedora >= 34
+  * Add support for attaching mount to an existing fuse module
+  * Add support for "direct I/O" files (CVM-2001)
+  * Add 'device id' command to cvmfs_talk (CVM-2004)
+  * Fix potential crash when accessing extended attributes (CVM-2014)
+  * [gw] Fix publishing empty uncompressed files (CVM-2012)
+  * Fix building Doxygen documentation
+  * Add support for setting "compression" key in graft files
+  * Remove spinlock in S3 uploader
+  * Remove spinlock in gateway uploader
+  * Reduce time spent in lsof during publishing
+  * [gw] Fast merging of nested catalogs (CVM-1998)
+  * [gw] Accommodate cvmfs-gateway Go sources (CVM-1871)
+  * Install cvmfs_receiver_debug (CVM-1988)
+  * Register redundant bulk hashes in filestats db
+  * Add support for SLES15 (CVM-1656)
+  * Do not include an explicit default port number within S3 upload URI
+    (see also libcurl issue #6769)
+  * Do not escape '@' in URI strings
+  * [ducc] Fix version string
+  * [ducc] Ingest images using "sneaky layers" and template transactions
+
+2.8.2:
+  * Add `cvmfs_config fuser` command (CVM-2004)
+  * Add 'device id' command to cvmfs_talk (CVM-2004)
+  * Add Debian 11 "bullseye" platform (CVM-2020)
+  * Fix authz session identifiers with namespaces (CVM-2011)
+  * Improve error handling when parsing config files
+  * [preloader] make network timeout and retries configurable (CVM-1992)
+
+2.8.1:
+  * Gracefully handle template transaction failures (CVM-1964)
+  * [shrinkwrap] fix parsing of spec file (CVM-1708)
+  * Fix client cache hitrate reporting (CVM-1965)
+  * Fix server statistics display for JSROOT 6 (CVM-1970)
+  * Get repository host from read-only layer in enter shell (CVM-1969)
+  * Fix `cvmfs_server diff --worktree` on managed publishers (CVM-1972)
+  * Set CVMFS_USE_CDN=yes in service container
+
+2.8.0:
+  * [gw] fix catalog corruption when a nested catalog turns into a symlink
+    (CVM-1930)
+  * Update maxminddb to version 1.5.4
+  * Fix committing publications with gateway >= 1.2
+  * Fix cvmfs_config status for broken mountpoints (CVM-1959)
+  * Improve network error handling during GC (CVM-1957)
+  * [macOS] fix reload on macOS >= 10.15
+  * Fix reload if only config repository is mounted
+  * Log when geosort ends up switching a proxy (CVM-1920)
+  * [server] fix stuck Apache processes with disabled geo API (CVM-1956)
+  * [ducc] add support for podman image store meta-data
+  * Add experimental `cvmfs_server diff --worktree` command (CVM-1869)
+  * New defaults overlayfs over aufs and CVMFS_IGNORE_XDIR_HARDLINKS (CVM-1909)
+  * [macOS] update to macFUSE 4 (CVM-1960)
+  * [ducc] preserve timestamp of extracted files (CVM-1950)
+  * [libcvmfs] implement cvmfs_remount(), add cvmfs_get_revision() (CVM-1958)
+  * Fix reflog repair when there is a zombie hash in the manifest (CVM-1919)
+  * [server] add `enter` command to open an ephemeral environment that gives
+    writable access to a repository (CVM-1924)
+  * [ducc] add support for pulling Docker images with authenticated user
+    using CVMFS_DOCKERHUB_[USER|PASS] environment variables
+  * [gc] show progress during sweep phase (CVM-1929)
+  * [server] add support for wait & retry on opening transactions (CVM-1937)
+  * [server] let return code of transaction indicate the error (CVM-1873)
+  * Fix ingestion of hardlinked catalog markers (CVM-1931)
+  * Add `cvmfs_talk chroot <hash>` command
+  * Add CVMFS_TALK_SOCKET and CVMFS_TALK_OWNER client parameters
+  * Add `cvmfs_server transaction -T /foo=/bar` template transactions (CVM-1801)
+  * Refuse non-regular .cvmfscatalog files during publish (CVM-1868)
+  * Replace `swissknife hash` by `publish hash` including MD5 support
+  * Add experimental support for WSL2
+  * [deb] demote apache2 dependency from required to recommended
+  * Add support for Azure blob storage as an S3 backend
+  * Add a Docker service container as a new package type
+  * [macOS] update libressl to version 3.1.2
+  * Update c-ares to version 1.16.1
+  * Update libcurl to version 7.71.1
+  * Update sqlite to version 3.32.2
+  * Fix ingest into root directory
+  * Spawn watchdog for `swissknife sync` command
+  * Add 'chunk_list' magic extended attribute (CVM-1875)
+  * Remove perl as a package dependency
+  * [libcvmfs] add cvmfs_options_parse_default()
+  * [libcvmfs] add cvmfs_listdir_stat()
+  * [libcvmfs] add catalog counters to struct cvmfs_nc_attr
+  * Parallelize catalog traversal in garbage collection
+  * [gw] publish files without writing temporaries to disk (CVM-1793)
+  * Improve performance of uploading small objects to S3
+  * Fix double counting in swissknife filestats command
+  * [ducc] Parallelize check if images are up to date
+  * Indicate error type by return value in `cvmfs_server transaction`
+  * [gw] add incoming publisher catalog to reflog to avoid dark garbage
+  * [ducc] Add support for converting from private registries
+  * Use multi-threaded upload facility on gateway (CVM-1739)
+  * Maintain publish statistics on gateway (CVM-1806)
+  * Add CVMFS_STATS_DB_DAYS_TO_KEEP parameter to prune publish statistics
+    database, defaults to 356 days (CVM-1841)
+  * [client] Add catalog_counters extended attribute (CVM-1824)
+  * [server] Add CVMFS_UPLOAD_STATS_PLOTS parameter to automatically generate
+    and upload publish statistics plots; requires ROOT (CVM-1836)
+  * [ducc] Improve robustness against intermittent registry failures (CVM-1829)
+  * [ducc] Add support for wildcards in tag names (CVM-1715)
+  * [ducc] Make temporary directory configurable (CVM-1826)
+  * [ducc] Require Singularity >= 3.5 (CVM-1840)
+  * [server] Add new parameter CVMFS_UPLOAD_STATS_DB=[true/false] in order to
+    push publish and GC statistics into the /stats location on the Stratum 0
+  * Add the cvmfs_publish transitional utility
+  * Add convert-singularity-image command to DUCC
+  * Enable readdir caching on fuse3 and kernel >= 4.20
+  * Add fuse forget_multi calback for fuse >= 2.9
+  * Add POSIX external cache plugin (CVM-1823)
+  * Manage DUCC daemon with systemd units
+
+2.7.6:
+  * Improve reporting of .cvmfsdirtab errors
+
+2.7.5:
+  * Fix crash when kernel meta-data caches close to 4G get evicted (CVM-1918)
+  * Add CVMFS_CLIENT_PROFILE, CVMFS_USE_CDN to cvmfs_config parameter list
+  * Let mount helper detect defined but empty CVMFS_HTTP_PROXY
+
+2.7.4:
+  * Fix name clash with certain concurrently hosted repository names (CVM-1899)
+  * [gw] fix statistics counting on renaming of nested subtrees (CVM-1906)
+  * Fix ingestion of tarballs with leading slashes (CVM-1907)
+  * Build cvmfs-fuse3 on Ubuntu 20.04 (CVM-1898)
+  * Remove insserv and initscripts as cvmfs-server dependencies (CVM-1897)
+
+2.7.3:
+  * Fix spurious SElinux error message on EL8 package upgrade (CVM-1878)
+  * Add `add-replica -P` option to create pass-through replicas (CVM-1845)
+  * Fix `cvmfs_config chksetup` for squashed NFS alien cache (CVM-1888)
+  * Fix building with GCC >= 10 (CVM-1894)
+  * Fix handling of .cvmfs_status.json after GC (CVM-1887)
+  * Add hidden `cvmfs_server eliminate-bulk-hashes` command (CVM-1428)
+
+2.7.2:
+  * Add `cvmfs_talk latency` command
+  * Improve logging when switching hosts (CVM-1844)
+  * Minor improvements to geo db command line interface (CVM-1850, CVM-1851)
+  * Reduce minimum and maximum days for geo db update
+  * Fix packaging for Fedora 31
+  * [gw] use watchdog in cvmfs_receiver (CVM-1864)
+  * [gw] build debug version of cvmfs_receiver (CVM-1863)
+  * [gw] fix lease acquisiton on non-existing paths (CVM-1696)
+  * Optimize loading of nested catalogs (CVM-1848)
+  * Fix creation of nested catalogs by ingestion command (CVM-1862)
+  * [gw] fix/relax JSON parsing of success status message
+
+2.7.1:
+  * Build cvmfs-fuse3 on Debian 10 "buster" (CVM-1825)
+  * Add support for CVMFS_GEO_DB_FILE replica parameter
+  * Change geodb update to use license key (CVM-1833)
+  * Fix host fail-over after redirection (CVM-1675)
+  * Add reboot info to Catalina installation screen
+
+2.7.0:
+  * Fix potential file descriptor mix-up of external cache manager after reload
+  * Fix spurious error with 'auto;DIRECT' when WPAD returns no proxy (CVM-1818)
+  * Add firmlink /cvmfs --> /Users/Shared/cvmfs on macOS >= 10.15
+  * Set default mount point to /Users/Shared/cvmfs on macOS >= 10.15 (CVM-1813)
+  * Use relative symbolic links in DUCC (CVM-1817)
+  * Terminate fuse daemon if watchdog disappears (CVM-1753)
+  * Fix clashing generic tags for short transactions with gateway (CVM-1735)
+  * Add "repo_counters" and "repo_metainfo" xattrs (CVM-1499, 1733)
+  * Add support for extended attributes on directories
+  * Add support for CVMFS_ENFORCE_ACLS client parameter
+  * Fix missing package dependency on Debian 9 and Ubuntu 18.04 (CVM-1789)
+  * Enable default config repository for debian stretch and newer (CVM-1794)
+  * Fix potential parsing of incomplete /etc/hosts
+  * Fix stale negative entries in active cache eviction (CVM-1759)
+  * Add support for EL8 platform (CVM-1731)
+  * Fix publish statistics for several corner cases (CVM-1716 .. CVM-1720)
+  * Add 'list_reflog' command to cvmfs_swissknife (CVM-1760)
+  * Add 'filestats' command to cvmfs_swissknife (CVM-1756)
+  * Add fuse callback performance instrumentation through new switch
+    CVMFS_INSTRUMENT_FUSE (CVM-1770)
+  * Add S3 standalone benchmark utility along with -DCVMFS_STRESS_TESTS build
+    option (CVM-1749)
+  * Explicitly specify python2 in webapi/cvmfs-api.py shebang
+  * Remove cvmfs_stratum_agent and the mongoose external library
+  * Add support for CVMFS_LIBRARY_PATH to simplify standalone deployment
+  * Enforce CVMFS_NFILES only if mounted via mount helper
+  * Add support for pre-mounted mount point with libfuse3
+  * Add support for libfuse3, including new mount option libfuse=[2|3]
+    (CVM-1710, CVM-1744)
+
+2.6.4:
+  * Fix client updates on shared writable alien cache (CVM-1803)
+  * Fix spurious error message when spawning external cache
+
+2.6.3:
+  * Fix parsing of /etc/hosts (CVM-1796, CVM-1797)
+
+2.6.2:
+  * Fix reload if config repository is set but unmountable (CVM-1795)
+
+2.6.1:
+  * Fix potential mix-up of chunked files in NFS mode (CVM-1791)
+  * Fix grafting of empty files (CVM-1785)
+  * Add -g snapshot group option to cvmfs_server (CVM-1779)
+  * Fix syntax errors in external libraries build system (CVM-1781, CVM-1782)
+  * Fix master key card handling with openssl-pkcs11 >= 0.4.7 (CVM-1788)
+  * Fix locking logic in Geo-API web service (CVM-1777)
+  * Check for missing autofs map directory include in chksetup (CVM-1686)
+  * Fix file mode for gateway keys in cvmfs_server import_keychain (CVM-1746)
+  * Move from WebSockets notifications to server-sent events
+  * Fix AWSv4 S3 authentication when using a non standard port
+  * Fix Cloudflare geo API with proxy name (CVM-1774)
+  * Fix DNS resolution in S3 backend with DNS style buckets
+  * Fix potential hang during reload if a config repository is used (CVM-1466)
+  * Disable active cache eviction as work around for stale negative entries
+    (CVM-1759)
+  * Fix small memory leak in S3 uploader
+  * Periodically reload Geo-IP database (CVM-1739)
+  * Enable extra compiler assertions in unit tests
+  * Fix host file parsing in DNS resolver, triggered by gcc9 (CVM-1763)
+  * Fix usage of singularity in container publishing service
+  * Fix various issues in the HTTP 429 rate throttling behavior (CVM-1755)
+  * Fix placement of cvmfschecksum files for uncommon cache setups (CVM-1728)
+  * Fix file descriptor exhaustion when browsing many small catalogs (CVM-1742)
+  * Manifest now can include reflog hash, fixing check with gw (CVM-1732)
+  * Fix `snapshot -a` when no replicas are defined
+  * Fix overwrite of locked down directories during ingestion
+  * Fix ingestion at deeply nested catalog structures (CVM-1721)
+  * Fix bug where the receiver temp dir caused failure of integrity
+    checks (CVM-1704)
+  * Fix a bug preventing GC on the repository gateway (CVM-1705)
+  * Fix a bug in the gateway key parser when key contained repeated chars
+  * Fix transaction lock name for tarball ingest with gateway backend
+  * Add GC support for legacy catalogs before 1.0 schema stabilized (CVM-1698)
+  * Fix potential race condition in the stats collector for the S3 uploader
+  * Better control of memory consumption in file processing pipeline (CVM-1687)
+  * More robust parsing of gateway API keys (CVM-1693)
+
+2.6.0:
+  * Increase CVMFS_NFILES to 64k on read-only union file system mount
+  * RPM: DUCC is disabled on Aarch64 due to missing Golang RPM on RH 7
+  * New notification system to announce repository changes (CVM-1575, CVM-1634)
+  * New tool suite ducc, daemon that unpacks container images into cvmfs
+  * Fix building on macOS Mojave
+  * Update sqlite to version 3.27.2
+  * Update c-ares to version 1.15.0
+  * Update libcurl to version 7.63.0
+  * New parameter CVMFS_CATALOG_WATERMARK to release as of $n$ pinned catalogs
+  * Add cvmfs_shrinkwrap utility and sub package (CVM-1578)
+  * Add support for bearer token authentication (CVM-1320)
+  * New build option ENABLE_ASAN for address sanitizer
+  * New libcvmfs methods for extended attribs, catalogs, and multi-threading
+  * Publication statistics are saved to an SQLite file (CVM-1567)
+  * Optionally print statistics at the end of publication (CVM-1566)
+  * Reactivate tracer, new parameters CVMFS_TRACEBUFFER{_THRESHOLD} (CVM-1596)
+  * Add libcvmfs calls that list and stat nested catalogs (CVM-1577)
+  * Generally replace @fqrn@ and @org@ in configuration (CVM-1526)
+  * Add support for CVMFS_NFS_INTERLEAVED_INODES (CVM-1561)
+  * Add support for ingesting tarballs (CVM-1476)
+  * Optionally print GC stats with CVMFS_SERVER_FLAGS=-+stats
+  * Fix debian packaging warnings and errors
+
+2.5.3:
+  * [S3] fix rare crash during file upload
+  * [macOS] fix hanging reload during `cvmfs_config reload`
+  * Reduce IOPS during publishing to local backend
+  * [S3] Add support for CVMFS_S3_PEEK_BEFORE_PUT
+  * Prevent dirtab entries from wandering outside the repository (CVM-1608)
+  * [S3] Handle HTTP 429 "too many requests" replies (CVM-1584)
+  * [S3] Retry on HTTP 502 errors
+  * Add support for server side CVMFS_NUM_UPLOAD_TASKS parameter
+  * Log more details for host and proxy connection errors (CVM-1662)
+  * Fix credentials handling on HTTP retries (CVM-1660)
+
+2.5.2:
+  * Add support for CVMFS_DNS_{MIN,MAX}_TTL (CVM-1659)
+  * Disable suid binary integration test (083) on macOS
+  * Log to syslog when session authorization disappears (CVM-1658)
+  * Report start of mark and sweep phases during GC
+  * Fix cache cleanup logic for chunks >25M (CVM-1625)
+  * Fix stale authz session cache when repository membership changes (CVM-1653)
+  * Restrict lazy downloads of geodb to once a day (CVM-1647)
+  * Improve error reporting for replication/preloading (CVM-1624)
+  * Update Apache config to ignore If-Modified-Since on stratum 1s (CVM-1655)
+  * Add support for CVMFS_MAX_[EXTERNAL_]SERVERS (CVM-1631)
+  * Fine-grained syncfs control through
+    CVMFS_SYNCFS_LEVEL=[none,default,cautious] (CVM-1646)
+  * Improve printing of warnings during publish (CVM-1630)
+  * Add support for CVMFS_SUID config parameter (CVM-1591)
+  * Repository gateway protocol version bumped to 2 (CVM-1626).
+  * New parameter CVMFS_FUSE_NOTIFY_INVALIDATION; disabling it fixes
+    stability issues on macOS (CVM-1638)
+  * Fix permissions on temporary directory used by the receiver
+  * Session tokens for gateway transactions are deleted after use (CVM-1643)
+  * Automatically apply lease path to abort and publish commands (CVM-1601)
+  * Add retry support for `cvmfs_server transaction` (CVM-1611)
+  * New S3 config parameter CVMFS_S3_DNS_BUCKETS=false disables DNS-style
+    bucket URLs when S3 backend doesn't support them (e.g. Minio) (CVM-1641)
+  * Add support for URL subpaths and DNS buckets in the S3 backend (CVM-1641)
+  * Fix content type header for objects pushed to S3
+  * Fix cache control headers for objects pushed to S3 (CVM-1606)
+  * Fix building on macOS 10.14
+  * Fix potential memory corruption in catalog traversal
+  * Reimplement cvmfs_talk in C++ to improve efficiency
+  * Fix busy waiting in cache manager communication under heavy load (CVM-1618)
+
+2.5.1:
+  * Fix potential memory corruptions in tiered cache and swissknife history
+  * Fix cvmfs_suid_helper on Ubuntu 18.04 for symlinked spool directory
+  * Replace geolite free database by geolite2 (CVM-1496)
+  * Apply catalog updates from updated alien cache (CVM-1515)
+  * Fix compilation with libattr >= 2.4.48
+  * Fix potential memory corruption in ingestion pipeline
+  * Fix occasional false error of 'cvmfs_config probe' on FC28
+  * Fix locking bug in cvmfs_server snapshot (CVM-1598)
+  * Fix Yubikey signature handling (CVM-1604)
+  * Publication with gateway gracefully exits when reflog is missing (CVM-1560)
+  * Fixed Ubuntu 18.04 packages
+  * Workspace is only assumed to be CWD in the FUSE client (CVM-1603)
+  * Flush file system buffers after snapshot, gc, resign, publish (CVM-1552)
+  * Add support for CA bundle files through X509_CERT_BUNDLE (CVM-1421)
+  * Improve error message when mount point does not exist (CVM-1562)
+  * Gracefully quit mount helper if required config repo is missing (CVM-1512)
+  * Fix publishing through gateway with CVMFS_AUTO_TAGS=false (CVM-1559)
+  * Parallelize object removal in S3 backend (CVM-1593)
+  * Make S3 network parameters adjustable, new parameters
+    CVMFS_S3_MAX_RETRIES, CVMFS_S3_TIMEOUT
+  * Fix compiler optimization flags for gcc8+ and clang9+
+  * Update BNL and FNAL stratum 1 aliases (CVM-1556)
+  * Improved check for OSXFUSE in "cvmfs_config chksetup" (CVM-1550)
+  * Fix potential deadlock when uploading files to repository GW (CVM-1555)
+  * Reduce number of temporary files when publishing through GW (CVM-1548)
+  * Check for link count > 0 in swissknife check (CVM-1549)
+  * Linkcount is set to 1 for hardlinked files published through GW (CVM-1542)
+  * Limit queue size of the gateway spooler to 2G
+  * Store gateway receiver's temp files in $SPOOLER_TMP/receiver (CVM-1540)
+  * Handle spooler failures gracefully in the gateway receiver (CVM-1545)
+  * Fix incomplete manifest after catalog migration operations (CVM-1534)
+
+2.5.0:
+  * Check for autofs in cvmfs_server rmfs only for stratum 0s (CVM-1490)
+  * React on change of DNS server on Linux (CVM-496)
+  * Fix catalog checksum destination from cwd to workspace (CVM-962)
+  * Use `systemd start <mount unit>` in suid helper if applicable (CVM-1398)
+  * Set httpd selinux label for GeoIP database (CVM-1454)
+  * Make CVMFS_GENERATE_LEGACY_BULK_CHUNKS=false the default (CVM-1429)
+  * Run automatic garbage collection with frequency controlled by the
+    CVMFS_AUTO_GC_LAPSE parameter (CVM-1400)
+  * Fix use of short term TTL when the manifest cannot be downloaded
+  * Fix crash on `cvmfs_talk remount` with fixed catalogs
+  * Send offline mode enter/recover events to syslog (CVM-1497)
+  * Sanitize repository names in cvmfs_server (CVM-1389)
+  * Use /etc/auto.master.d/cvmfs.autofs if applicable (CVM-675)
+  * Add functionality to print the hierarchy of branches (CVM-1392)
+  * Fix error message when trying to mount an already mounted repo (CVM-1477)
+  * Fix transaction abort with many temporary files (CVM-1390)
+  * Fix garbage collection of idle repositories (CVM-1460)
+  * Place bootstrapping symlinks on replica storage (CVM-1366)
+  * Improve CPU utilization when downloading with limited bandwidth (CVM-1480)
+  * Use lazy unmount as a last resort in `cvmfs_config killall` (CVM-1465)
+  * Add CloudFlare support to GeoAPI (CVM-1468)
+  * Fix warnings in cvmfs_server on bash >= 4.4 (CVM-1401)
+  * Create libcvmfs.a and libcvmfs_cache.a on macOS (CVM-1489)
+  * Set default cache limit to 20G on macOS
+  * Fix statvfs for cache size >4G on macOS (CVM-1474)
+  * Add support for diff snapshots based on root hash (CVM-1452)
+  * Enable manual trigger to release nested catalogs in unsupervised memory
+    cache plugin
+  * Add new server parameter CVMFS_IGNORE_SPECIAL_FILES
+  * Add support for special files (CVM-1106)
+  * Remove S3 multi-bucket support
+  * Use AWSv4 S3 authorization if CVMFS_S3_REGION is set (CVM-988)
+  * Add CAP_DAC_READ_SEARCH to swissknife to publish locked-down files
+  * Don't enforce user_allow_other fuse option (CVM-1379)
+  * New file ingestion pipeline
+  * Drop tbb dependency
+  * Add docker graph driver plugin configuration
+  * Add RapidCheck for property based testing
+  * Fix compilation on macOS 10.11+
+  * Add stratum 1 agent for triggered replication
+  * Autmatically restart failed authz helper after a cool-off period
+  * Make `true` to be a valid boolean option
+
+2.4.5:
+  * Use CVMFS_MAX_IPADDR_PER_PROXY=2 by default on macOS
+  * Fix-up for reacting on DNS server change (CVM-496)
+
+2.4.4:
+  * Fix registration of chunk hashes without bulk hash and non-SHA1 hash
+    algorithm (CVM-1446)
+  * React to a change of DNS server on macOS (CVM-496)
+  * Have geoapi try $REMOTE_ADDR if $HTTP_X_FORWARDED_FOR has no geoinfo
+    (CVM-1442)
+
+2.4.3:
+  * Fix location of cvmfschecksum file for tiered cache config (CVM-1436)
+  * Fix throughput reporting in `cvmfs_config stat` (CVM-1432)
+  * Fix races in mtab handling of crash unmounter with writable mtab (CVM-1431)
+  * Turn cvmfs-config into Debian virtual package (CVM-1420)
+  * Invalidate inodes instead of dentries on reload/remount (CVM-1423)
+  * Workaround for alien cache on BeeGFS (CVM-1403)
+
+2.4.2:
+  * Skip external files during garbage collection (CVM-1396)
+  * Enforce numeric value when manually setting revision number (CVM-1372)
+  * Add cvmcache_get_session() to cache plugin API (CVM-1368)
+  * Enforce explicit catalog TTL setting on publish (CVM-1388)
+  * Fix variant symlink display on release manager machine (CVM-1383)
+  * Prevent diff viewer from recursing into hidden directories (CVM-1384)
+  * Prevent overlayfs repositories on XFS ftype=0 spool directories (CVM-1385)
+  * Cache GeoAPI replies for 5 minutes, improve WSGI config (CVM-1349)
+  * Improve logging for cache plugins
+  * Fix use of cached file catalog in cache plugins
+  * Fix off-by-one error for chunk size when grafting files
+
+2.4.1:
+  * Don't perform health check on resign (CVM-1358)
+  * Fix potential deadlock in parallel catalog processing (CVM-1360)
+
+2.4.0:
+  * Fix `cvmfs_config reload` on macOS
+  * Fix cvmfs_config reload under root environment with cvmfs deps (CVM-1352)
+  * Add support for CVMFS_{ROOT|NESTED}_KCATALOG_LIMIT, CVMFS_FILE_MBYTE_LIMIT,
+    CVMFS_ENFORCE_LIMITS to set publish limits (CVM-1094, CVM-1123)
+  * Add support for revision entries in blacklist (CVM-992)
+  * Reduce default catalog TTL to 4 minutes (CVM-1336)
+  * Add cvmfs_server resign -d option (CVM-1279)
+  * Add support for CVMFS_OOM_SCORE_ADJ (CVM-1092)
+  * Show all CVMFS_... parameters in `cvmfs_config showconfig` (CVM-1180)
+  * Limit number of concurrent S3 PUT operations (CVM-1339)
+  * Set Apache content-type of objects to application/octet-stream (CVM-1067)
+  * Add CVMFS_GENERATE_LEGACY_BULK_CHUNKS parameter to control creation of
+    bulk hashes for chunked files (CVM-640)
+  * Assign port 8000 to httpd in selinux configuration during RPM post-install
+    (CVM-1308)
+  * Use "AllowOverride Limit AuthConfig" directive (CVM-1255)
+  * Set Apache manifest expiry period to 61 seconds
+  * Remove checks for conflicting cvmfs_server 2.0.x artifacts (CVM-1167)
+  * Lift restriction on autofs in nfs mode (CVM-975)
+  * Allow ext3 as spool file system on RHEL 7.3 / overlayfs (CVM-1186)
+  * Add `cvmfs_server resign -p` command (CVM-1140)
+  * Add `cvmfs_server check -r` command to repair reflog checksum (CVM-1240)
+  * Add ncleanup24 xattr and Nagios check for cleanup rate (CVM-1097)
+  * Add cvmfs_server resign -w for stand-alone whitelist resigning (CVM-1265)
+  * Fix shell errors when required config repo cannot be mounted (CVM-1300)
+  * Add support for Yubikey 4 & NEO to cvmfs-server (CVM-1259)
+  * Fix mount helper for very long lines in /etc/group (CVM-1304)
+  * Change default graft size from 32M to 24M (CVM-1291)
+  * Fix cache size reporting in 'df' on macOS (CVM-1286)
+  * Use a repository layout revision as CVMFS_CREATOR_VERSION (CVM-1065)
+  * Improve error reporting when cache hosting file system is full (CVM-1253)
+  * Perform fail-over when whitelist or manifest is corrupted (CVM-837)
+  * Increase maximum repostory name from ~30 chars to 60 chars (CVM-1173)
+  * Add cvmfs_server gc -a option (CVM-1095)
+  * Fixes for OpenSSL 1.1 interface changes
+  * Use rsync "perishable" feature instead of list-catalogs (CVM-1199)
+  * Add cvmfs_server checkout command and support for branches (CVM-1197)
+  * Add cvmfs_server diff command (CVM-1070)
+  * Possibility to split cache dir and workspace, add CVMFS(_CACHE)_WORKSPACE
+  * Trim trailing whitespaces from .cvmfsdirtab entries (CVM-1061)
+  * Cache proxy settings in workspace directory (CVM-1156)
+  * Add `cvmfs_talk remount sync` command
+  * Use active eviction of kernel caches with libfuse >= 2.9 (CVM-1041)
+  * Add external and internal in-memory cache manager (CVM-1044)
+  * Add tiered cache manager (CVM-1050, CVM-1183)
+  * Support for instance based cache configuration (CVM-1053)
+  * Fix mount helper if repository name resolves to local path (CVM-1160)
+  * Make cvmfs_server catalog-chown command public (CVM-1077)
+  * Update stratum 1 default configuration (CVM-1147)
+  * Update cern.ch master keys
+  * Use built-in LibreSSL on macOS (CVM-1112)
+  * Use -Os compiler flag
+  * Use c-ares 1.13.0
+  * Use libcurl 7.54.1
+  * Use sqlite 3.19.3
+  * Add CVMFS_VIRTUAL_DIR server parameter (CVM-1062)
+  * Add catalog support for hidden files and bind mountpoint
+  * Add CVMFS_IGNORE_SPECIAL_FILES server parameter
+  * Ignore special files with a warning on publish (CVM-1106)
+  * Add support for Debian 8 (CVM-1104)
+  * Add support for pluggable, external cache managers (CVM-1054)
+  * Keep debug symbols of libcurl and c-ares
+  * Use default X509_CERT_DIR also if it is empty string (CVM-1083)
+  * Add micro benchmark framework
+  * Fix building on Arch Linux
+  * Fix building on the Raspberry Pi
+  * Add new initialization interface to libcvmfs (CVM-947)
+  * Fix build with gcc 6 (CVM-1051)
+  * Use cache for fetching history database on mount
+  * Fix small memory leak during remount of root catalog
+  * Fix handling of file:// url in CVMFS_SERVER_URL
+
+2.3.5:
+  * Let RPM drop patch configuration for CVM-1200 where necessary
+
+2.3.4:
+  * Unlink empty files during cache db rebuild (CVM-1113)
+  * Fix gathering 'rawlink' extended attribute
+  * Allow for keys directory used with stratum 1 repositories (CVM-985)
+  * Fix snapshot logging for large tag lists (CVM-1021)
+  * Fix auto tag cleanup for very long tag lists (CVM-1198)
+  * Fix stratum 0 /etc/fstab migration from versions < 2.1.20 (CVM-1182)
+  * Work around CentOS 7 bug in autofs systemd unit (CVM-1200)
+
+2.3.3:
+  * Fix parsing of nested catalogs in dirtab for cvmfs_preload
+  * Fix asynchronous cleanup with open file descriptors on some aufs versions
+  * Add .cvmfs_status file (CVM-1107)
+  * Fix potential deadlock when uploading catalogs (CVM-1165)
+  * Fix 'cvmfs_server resign' if CVMFS_HASH_ALGORITHM is unset (CVM-1013)
+  * Compact reflog after garbage collection (CVM-1162)
+  * Fix migration of server info JSON files (CVM-1159)
+  * Fix selecting repositories by wildcard in cvmfs_server (CVM-1151)
+  * Prevent GC from running at the same time as snapshot (CVM-1108)
+  * Don not ignore stale locks when publishing (CVM-1146)
+  * Add CVMFS_CONFIG_REPO_REQUIRED option (CVM-1111)
+  * Accept OverlayFS / ext4 on RHEL >= 7.3 (CVM-835)
+  * Fix build on RHEL7.3 (CVM-1153)
+  * Increase robustness when fetching reflog and checksum (CVM-1114, CVM-1124)
+  * Add cvmfs_talk external host switch (CVM-1126)
+  * Fix misleading cache cleanup log message (CVM-1128)
+  * Fix cvmfs_config on EL7 if working directory is /usr/bin (CVM-1118)
+  * Perform host failover on corrupted data (CVM-478)
+  * Fix cvmfs_config umount failure output
+  * Fix comment in default.conf (CVM-1105)
+  * Fix history file leak on auto tag removal
+  * Fix crash when 'cvmfs_talk cleanup rate' is called without argument
+  * Fixes for macOS 10.12 Sierra (CVM-1084)
+
+2.3.2:
+  * Fix error reporting when downloading replication sentinal file (CVM-1078)
+  * Fix publishing of auto catalog markers (CVM-1079)
+  * Fix segfault in debug logging of certain download failures (CVM-1076)
+
+2.3.1:
+  * Fix rare corruption on NFS maps during mount / reload
+  * Use reflog timestamp instead of catalog inherent timestamp (CVM-764)
+  * Garbage collect auxiliary objects (CVM-1007)
+  * Prune previous catalog chain during replication of gc-enabled repositories
+  * Gracefully deal with proxies without http:// prefix (CVM-1045)
+  * Reset file capabilities of cvmfs_swissknife on package update (CVM-1038)
+  * Fix `cvmfs_server gc` for freshly created replicas (CVM-1043)
+  * Fix `mount -t cvmfs -o remount ...` (CVM-1068)
+  * Prevent fallback proxies from interfering with external data (CVM-1058)
+  * Fix up cvmfs_talk external commands (CVM-981)
+  * Fixes in upload and download of the reflog
+  * Add gc command to cvmfs_server help text (CVM-1011)
+  * Add mount command to cvmfs_server help text (CVM-1008)
+  * Add CVMFS_AUTO_TAG_TIMESPAN parameter to control automatic cleanup of old,
+    automatically created repository tags (CVM-982)
+  * Fix lsof report in cvmfs_server on newer Linux distributions
+  * Use tbb version 4.4 update 5
+  * Minimal set of fixes to allow compilation on Fedora 24
+  * Fix RPM dist tag for SLES12 (CVM-1032)
+  * Fix remote URL of `cvmfs_server check` on stratum 1
+  * Add local reflog checksum to ensure data integrity (CVM-1006)
+  * Fix false warning on graft files when removing trees on overlayfs (CVM-932)
+
+2.3.0:
+  * Fix crash on publish when symlinking an opaque directory
+  * Fix null pointer dereference for authz extended attribute
+  * Add well-defined client-side authz interface and allow/deny helpers
+  * Parallel commit of catalog databases after publish
+  * Speed-up catalog meta-data updates during publish
+  * Prevent a cvmfs_server migrate on a repository that is in a transaction
+  * Add `cvmfs_server mount` command (CVM-996)
+  * Remove scratch directory asynchronously on publish
+  * Fix maintaining "previous revision" pointer during catalog migrations
+  * Optimize sequence of creation/removal of nested catalogs during publish
+  * Reduce page cache utilization during publish
+  * Fix lookup of sbin binaries in cvmfs_server
+  * Add 'cvmfs_talk detach nested' debug and testing interface
+  * Add per-database memory statistics to 'cvmfs_talk internal affairs'
+  * Avoid unloading of the fuse library under Valgrind
+  * Reduce memory consumption and fragmentation
+  * Use sqlite 3.10.2
+  * Fix a few small memory leaks during reload of the library
+  * Reduce number of system calls during publish
+  * Add support for cvmfs_swissknife publish -f to force publishing in the
+    presence of open file descriptors
+  * Fix a rare crash when parsing the whitelist in cvmfs_server
+  * Call cvmfs_suid_helper with a clean environment from cvmfs_server
+  * Add .cvmfsreflog for garbage collection
+  * Omit S3 bucket number if only a single bucket is used
+  * Warn when forcfully remounting the file system stack on the server, new
+    parameter CVMFS_FORCE_REMOUNT_WARNING
+  * Add support for default.conf in config repository (CVM-993)
+
+2.2.3:
+  * Fix stale open chunked files that are updated in the repository (CVM-1017)
+
+2.2.2:
+  * Fix compilation of libcvmfs on Fedora 23 i686
+  * Update cvmfs_rsync to handle source dirs changed into symlinks (CVM-1004)
+  * Backport `cvmfs_server mount -a`
+  * Remove use of SSLv3_client_method() in libcurl
+  * Fix 'cvmfs_server snapshot -a' not noticing failed snapshots (CVM-997)
+
+2.2.1:
+  * Fix reading of chunked files in libcvmfs
+  * Disable access to VOMS protected repositories until certificate handling
+    is resolved
+
+2.2.0:
+  * Add VOMS as a build dependency on platforms where it is available.
+  * Detect missing 'http:// proxy prefix in chksetup (CVM-979)
+  * Remove sudo dependency from Linux packages
+  * Fix race when reloading at the same time as evicting data from the cache
+  * Fix cache-control max-age time coming from .cvmfs* files on EL7 (CVM-974)
+  * Fix rare deadlock on unmount
+  * Fix mistakenly ignoring catalogs during garbage collection (CVM-966)
+  * Fix mounting with a read-only cache directory
+  * Add user.pubkeys extended attribute
+  * Add `cvmfs_server snapshot -a` (CVM-813)
+  * Add support for a garbage collection deletion log (CVM-710)
+  * Print error message at the end of a failing `cvmfs_server check` (CVM-958)
+  * Use patched pacparser 1.3.5 for IPv6 support (CVM-903)
+  * Add support for VOMS authentication in fuse module (CVM-904)
+  * Add `cvmfs_server update-repoinfo` command (CVM-804)
+  * Add `cvmfs_talk cleanup rate` command (CVM-270)
+  * Read blacklist from config repository if available (CVM-901)
+  * Add support for uncompressed files (CVM-906)
+  * Add support for external data (CVM-907)
+  * Add CVMFS_IPFAMILY_PREFER=[4|6] to select preferred IP protocol for proxies
+  * Fix crash when publishing specific files which a size of a multiple of the
+    chunk size (CVM-957)
+  * Immediately pick up new catalogs after idle period (CVM-636)
+  * Add CVMFS_REPOSITORY_TTL server parameter for repository TTL in seconds
+  * Move python library to a separate repository
+  * Harden GeoAPI against cache poisoning (CVM-722)
+  * Fix handling of empty CVMFS_CONFIG_REPOSITORY
+  * Allow for configuration of DNS timeout and retry (CVM-875)
+  * Add IPv6 support for GeoAPI (CVM-807)
+  * Add `cvmfs_server check -s` to verify subtrees
+  * Don't resolve magic symlinks in server mode (CVM-879)
+  * Unmount repositories when rpm is erased (CVM-757)
+  * Allow for alternative URLs for root catalog outside /data subdirectory
+  * Add static status files on stratum 0/1 server (CVM-860)
+  * Fix cache directory selection in `cvmfs_config wipecache` (CVM-709)
+  * Add `cvmfs_config killall` command (CVM-899)
+  * Log events to syslog in cvmfs_server (CVM-812, CVM-861)
+  * Enable `cvmfs_server import` to generate new repository keys (CVM-865)
+  * Do not mount /cvmfs on boot on the release manager machine; on the first
+    transaction, CVMFS_AUTO_REPAIR_MOUNTPOINT mounts automatically
+  * Perform host fail-over on HTTP 400 error code (CVM-819)
+  * Fail immediately if CVMFS_SERVER_URL is unset (CVM-892)
+  * Add -p switch to cvmfs_server commands to skip Apache config (CVM-900)
+  * Minor fixes to libcvmfs (CVM-831, CVM-893)
+  * Add CLI for grafting files (CVM-933)
+  * Add support for explicitly listed repositories in 'cvmfs_config probe'
+    (CVM-793)
+  * Allow for repository removal without removing the content (CVM-738)
+  * Add cvmfs_config fsck command (CVM-371)
+  * Avoid use of sudo in cvmfs_server (CVM-245)
+  * Various build system fixes (CVM-783, CVM-854, CVM-857)
+  * Avoid rolling back to incompatible catalog schemas (CVM-252)
+  * Add cvmfs_rsync utility (CVM-814)
+  * Fixes for OS X El Capitan, move install directory on OS X to /usr/local
+    (CVM-917)
+  * Fix rare bug in the garbage collection that can lead to removal of live
+    files (CVM-942)
+  * Add support for grafting of files (CVM-908)
+  * Make CVMFS_AUTO_REPAIR_MOUNTPOINT the default (CVM-889)
+  * Fix mount point auto repair when only the read-only branch is broken (CVM-918)
+  * Fix URL option parsing for S3 backend in cvmfs_server
+  * Add quasi-static cvmfs_preload binary (CVM-912, CVM-914)
+  * Add auto-balancer for catalogs (experimental) with server parameters
+    CVMFS_AUTOCATALOGS, CVMFS_AUTOCATALOGS_MAX_WEIGHT,
+    CVMFS_AUTOCATALOGS_MIN_WEIGHT
+  * Fix auto tag creation for fast successive publish runs (CVM-795)
+  * Fix systemd detection in cvmfs_server on systems with multiple running
+    systemd processes like Fedora 22
+  * Fix rpm for Fedora > 21, drop explicit support for fedora < 21
+  * Detect valgrind if valgrind header is present on the system
+  * Add make check target
+  * Fix leak of temporary files in .cvmfsdirtab handling (CVM-818)
+  * Allow geodb update for non-root users (CVM-895)
+  * Don't commit exisiting files to local storage backend in server (CVM-894)
+  * Fix stale lock file on server machine crash (CVM-810)
+  * Fix crash for invalid spooler definition (CVM-891)
+  * Fix leak of temporary files in the S3 backend (CVM-881)
+  * Add -s <S3 config file> switch to add-replica command
+  * Fix rare crashes on publish due to false whiteout handling (CVM-880)
+  * Fix moving of magic symlinks into nested catalogs (CVM-874)
+  * Prepare OS X mount helper for osxfuse 3
+  * Fix stack trace generation on OS X
+  * Tune OS X Fuse mount options
+  * Add support for chunked files in libcvmfs (CVM-687)
+  * Fix rare race that can result in a hanging reload
+  * Fix memory and file descriptor leak in the download manager during reload
+  * Add support for SHA3-SHAKE128 with 160 output bits
+  * Add listing of /var/run/cvmfs to bugreport tarball (CVM-868)
+  * Prevent ctrl+c during cvmfs_config reload (CVM-869)
+  * Avoid use of attr utility in the server (CVM-853)
+  * Add catalog-chown command to cvmfs_server (CVM-836)
+  * Handle import of repositories with an expired whitelist (CVM-780)
+  * Fix leak of temporary files during garbage collection (CVM-846)
+  * Fix verification of partial file chunks in cvmfs_server (CVM-842)
+  * Remove counting of open file descriptors from libcvmfs
+  * Fix resolving absolute symlinks into the same repository in libcvmfs
+    (regression)
+  * Add CVMFS_MAX_IPADDR_PER_PROXY parameter to avoid very long fail-over
+    chains
+  * Fix initialization of quota manager in libcvmfs (regression)
+  * Fix cleanup of global state in libcvmfs
+  * Use "unix-none" sqlite vfs in libcvmfs
+  * Add LIBCVMFS_VERSION_MAJOR, LIBCVMFS_VERSION_MINOR, LIBCVMFS_REVISION
+  * Add error code defines in libcvmfs
+  * Restore 2.1.19 option names in libcvmfs
+  * Follow HTTP redirects in S3 backend
+  * Change versioning scheme to MAJOR.MINOR.PATCH
+  * Disable caching for mutable objects in S3 backend (CVM-808)
+  * Automatically pick a union file system when creating a repository
+  * Fix several CentOS7 issues in the cvmfs_server script (CVM-737)
+  * Adjust to upstream OverlayFS changes
+  * Fix crash in 'cvmfs_swissknife dirtab' if .cvmfsdirtab contains /*
+  * Let 'cvmfs_config chksetup' find the Fuse library in /usr/lib/$platform
+    (CVM-802)
+  * Disable Geo-API for atlas nightlies
+  * Add benchmarks to the integration tests
+  * Use --max-time curl option in Nagios probe with 3 times connection timeout
+  * Add check for 32bit inode overflow to the Nagios probe (CVM-627)
+  * Add a timeout to the Nagios probe (CVM-683)
+  * Add 'make doc' as a target to build Doxygen documentation (CVM-692)
+  * Add CVMFS_SYSTEMD_NOKILL parameter to make cvmfs act as a systemd
+    recognized low-level storage provider
+  * Add CVMFS_HIDE_XATTRS client parameter to prevent synthetic extended
+    attributes from being listing
+  * Add support for custom extended attributes and file capabilities through
+    server parameter CVMFS_INCLUDE_XATTRS (CVM-734)
+
+2.1.20:
+  * Stop parsing of CernVM specific config files (CVM-614)
+  * Add CVMFS_MAXIMAL_CONCURRENT_WRITES configuration parameters for number of
+    I/O streams during publishing (CVM-703)
+  * Add possibility to use S3 compatible storage in the server (CVM-215)
+  * Recover from inconsistent state of mount points in the server (CVM-650)
+  * Concurrent initial snapshots will not wait for each other but all but the
+    first one fail with a non-zero exit code (CVM-278)
+  * Add support for geographically ordered fallback proxies (CVM-708)
+  * Add support for HTTP redirects through CVMFS_FOLLOW_REDIRECTS (CVM-766)
+  * Ensure autofs is running after 'cvmfs_config setup'
+  * Fix rebuilding cache database on XFS (CVM-685)
+  * CVMFS_PUBLIC_KEY takes precedence over CVMFS_KEYS_DIR (CVM-652)
+  * Fix error reporting when creating alien cache (CVM-677)
+  * Fix concurrent creation of cache sub directories (CVM-672)
+  * Replace cvmfs-keys package by cvmfs-config-... packages (CVM-617)
+  * Add CVMFS_LOW_SPEED_LIMIT parameter, increase threshold for stale
+    connections from 100B/s to 1kB/s (CVM-718)
+  * Allow cvmfs to claim ownership of files and directories through
+    CVMFS_CLAIM_OWNERSHIP (CVM-678)
+  * Add support for garbage-collected repositories (CVM-583, CVM-760)
+  * Add support for automatically ordering Stratum 1 servers according to
+    geographic loations (CVM-629, CVM-630)
+  * Add 'host probe geo' command to cvmfs_talk
+  * Add CVMFS_USE_GEOAPI parameter
+  * Add host_list extended attribute
+  * Fix traversal of nested catalogs in intermediate catalogs during snapshot
+  * Resolve round-robin DNS entries for proxies to a load-balance group
+    (CVM-457)
+  * Use AllowOverride Limit instead of AllowOverride All in Stratum 0/1
+    default configuration (CVM-661)
+  * Stop renaming catalogs in alien cache
+  * Make installation of bash completion files opt-out
+  * Apply umask to the mode when creating files on the Stratum 0/1 (CVM-660)
+  * Make server transaction handling more robust against failures and
+    concurrent operations (CVM-665, CVM-666)
+  * Install auto.cvmfs in /usr/libexec/cvmfs and make /etc/auto.cvmfs a
+    symlink (CVM-645)
+  * Restrict the number of in-flight file processing jobs in the server in
+    order to not exhaust file descriptor limit
+  * Fix whitelist resign period from one month to 30 days to match the
+    documentation (CVM-628)
+  * Use custom cvmfs_cache_t SELinux label for the cache directory (CVM-644)
+  * Fail gracefully if one of the public RSA keys is unreadable (CVM-667)
+  * Fix concurrent access to alien cache on NFS (link/unlink instead of rename)
+  * Support alien cache on hadoop-dfs-fuse which doesn't report
+    file size immediately (CVM-659)
+  * Fix false zero return code of 'cvmfs_server transaction' (CVM-658)
+  * Allow using externally created keys in cvmfs_server mkfs (CVM-646)
+  * Warn when aufs version is known to potentially cause deadlocks
+  * Fix alien cache catalog updates (CVM-653)
+  * Add underscore and tilde to the set of unescaped URI characters
+  * Fix packaging for Fedora 21
+  * Fix SElinux packaging for RHEL7 and Fedora 20
+  * Disable SQlite locking on the client; improves performance
+    and allows to store cache directory on file systems with
+    dodgy file locking support such as Lustre
+  * Change libcvmfs to access /cvmfs instead of /cvmfs/<repo>
+  * Add OSG, EGI public keys and config (CVM-641)
+  * Fail gracefully on errors in 'cvmfs_server import' (CVM-635)
+  * Allow for setting a revision number using
+    'cvmfs_server publish -n' (CVM-633)
+  * Work around gcc4.1 compiler bugs
+  * Add support for CVMFS_CONFIG_REPOSITORY (CVM-616)
+  * Change directory to config file being parsed (CVM-618)
+  * Export CVMFS_FQRN to shell callouts for option parsing
+    (CVM-619)
+  * Fix race when autofs unmounts a repository during reload
+  * Use file catalogs when processing .cvmfsdirtab (CVM-620)
+  * Support negative entries with wild cards in .cvmfsdirtab (CVM-639)
+  * Compact inflated catalogs on publish (CVM-610)
+  * Add 'letter' command to cvmfs_swissknife
+  * Use tbb 4.3 update 1
+  * Use sqlite 3.8.7.4
+  * Use libcurl 7.39
+  * Use leveldb 1.15
+  * Rename cvmfs_server lstags command to list-tags
+  * Add extended attribute user.tag
+  * Add CVMFS_REPOSITORY_DATE client parameter (CVM-625)
+  * Enable default auto tagging (CVMFS_AUTO_TAG)
+  * Add 'list-catalogs' command to cvmfs_server (CVM-611)
+
+2.1.19:
+  * Suppress confusing lsof output in cvmfs_server (CVM-624)
+  * Fix CVMFS_SEND_INFO_HEADER option handling (CVM-623)
+
+2.1.18:
+  * Fix publishing when other shells are open on /cvmfs/$fqrn
+  * Repository sanitation: require a dot in the repository name in
+    autofs map
+  * Parse /etc/cvmfs/default.d/*.conf after /etc/cvmfs/default.conf and
+    before /etc/cvmfs/default.local
+  * Log pacparser errors to syslog
+  * Resolve auto PAC location to http://wpad/wpad.dat
+  * Send requested file system path in cvmfs-info HTTP header (CVM-580);
+    behavior can be turned on and off through CVMFS_SEND_INFO_HEADER
+  * Fix overwriting regular file or symlink with non-empty
+    directory in cvmfs_server
+  * Fix rpm build on EL6.5 32bit
+  * Fix memory corruption during publish process (CVM-608)
+  * Use CVMFS_PAC_URLS instead of PAC_URLS
+  * Fix symlinked /var/spool/cvmfs/... (CVM-607)
+  * Add verbose texts to most error codes (CVM-594)
+  * Fix abnormal termination of cvmfs_server on whitelist
+    verification errors (CVM-602)
+  * Reduce default verbosity of 'cvmfs_server publish' (CVM-269)
+  * Fix automounter map on EL6.2 (CVM-601)
+  * Log to syslog in addition to stderr when debug log cannot
+    be opened (CVM-273)
+  * Fix false parsing of /etc/cvmfs/domaind.d/cern.ch.* on mount
+    (CVM-600)
+  * Improve error logging when loading the cvmfs library (cf. CVM-595)
+  * Fix crash in exclusive cache mode if unpin listener is called
+    on mount (CVM-267)
+  * Add "volatile" repository and volatile cache class (CVM-263)
+  * Fix TBB build system for 32bit on 64bit mock environments
+  * Fix RPM spec file for FC20
+  * Add cvmfs Python library
+  * Fix permissions of private keys on repository creation
+  * Fix race between cached chunked files and catalog updates
+  * Fix false caching of catalog object in dirent
+  * Support for RIPEMD-160 hash algorithm in lieu of SHA-1
+  * Switch to TBB 4.2 update 2
+  * Bash completion for cvmfs_config and cvmfs_server
+  * Fix build system for SL4
+
+2.1.17:
+  * Fix proxy failover on HTTP 403 errors (introduced in 2.1.16)
+
+2.1.16:
+  * Track uncompressed catalog sizes
+  * Replace sudo magic in cvmfs_server by cvmfs_suid_helper
+  * Record to syslog when highest inode exceeds 32bit
+  * Support for user.inode_max extended attribute
+  * Support importing a 2.1 repository
+  * Remove left-over FIFOs from cache directory
+  * Fix publish of recreated nested catalog hierarchies
+  * Fix race between catalog reload and Fuse module reload
+  * Fix parsing of CVMFS_MAX_TTL parameter
+  * Optionally disable httpd check in cvmfs_server
+  * Enforce immediate host failover on HTTP 404 errors
+  * Experimental support for pkcs#7 signed whitelists
+  * Fix build system for 32bit ARM
+  * Opportunistically clean up before loading files > 25M
+  * Change default catalog TTL to 15 minutes
+  * Add support for default values in variant symlinks
+  * Add support for extended attribute "rawlink"
+  * Fix compile errors with Apple clang 5
+  * Experimental support for replicating into client cache
+  * Experimental support for "alien cache" (CVMFS_ALIEN_CACHE)
+  * Fix multiple race conditions when repositories are unmounted
+    during reload
+  * Do not pull previous catalogs from snapshots
+  * Replace mount helper shell script by binary
+  * Replace autofs map shell script by binary
+  * Fix potential endless loop in 'cvmfs_config setup'
+  * Fix CVMFS_STRICT_MOUNT
+  * TBB driven, parallel file processing engine in server
+  * Follow rpm scheme in deb packaging (client, server, keys)
+  * Add fnal stratum 1 to default configuration
+  * Fix read-only cache mode
+
+2.1.15:
+  * Fix race in cvmfs_server publish
+  * Fix rare inconsistency in runtime size tracking of the cache
+  * Fix time calculation in cvmfs_talk host probe command
+  * Allow for multi-repo operations and wildcards in
+    cvmfs_server
+  * Allow for stratum 1 aliases
+  * Add simple check for cache space to 'cvmfs_config chksetup'
+  * Unpin catalogs on unmount
+  * Fix treatment of local I/O errors during stream decompression
+  * Change X-CVMFS2 header to User-Agent
+  * Improve logging on mount
+  * Properly finalize Fuse module on mount failures
+  * Build system: fix libattr devel detection
+  * Fix detecting the service utility under Ubuntu in cvmfs_config
+  * Replace leveldb usleep by SafeSleepMs
+  * Switch to leveldb 1.12.0 (IA-64 compatibility)
+  * Fix parsing of config file without trailing newline
+  * Expand backoff on download errors to the loading of
+    file catalogs
+  * Fix false negative caching of I/O errors that occur during
+    path lookup
+  * Place SQlite temporary files into cache directory
+  * Move OS X client from fuse4x to OSXFuse
+  * Properly handle (ignore) mount options
+    auto, noauto, user, nouser, users, _netdev
+  * Strip debug symbols from 3rd party externals
+  * Resolve "auto" proxy according to WLCG auto proxy discovery
+    (see http://cern.ch/go/HV9f)
+  * cvmfs_server: increase default expiration time for .cvmfspublished
+    to 2 minutes in order to avoid being dDoS'd by misconfigured
+    Squids
+  * Automatically unmount a crashed mountpoint from the watchdog
+  * Connect SQlite logger to cvmfs logger
+  * Switch to sqlite 3.7.17
+  * Add check for accessibiliy of /etc/nsswitch.conf to
+    cvmfs_config chksetup
+  * Add experimental support for overlayfs as an alternative to
+    aufs
+  * Enforce hard limit on number of concurrent HTTP connections
+  * Switch to libcurl 7.32.0
+  * Switch to zlib 1.2.8
+  * Switch to c-ares 1.10.0
+  * Fix "one too often" fail-over
+  * Consider all HTTP 5XX errors as host errors
+  * Release pinned catalogs at high watermark of pinned files
+  * Unset executable bit of /etc/cvmfs/{default.conf,config.sh}
+  * Fix potential endless loop in download thread
+  * Refurbish build system for external dependencies
+  * Fix C binding of libcvmfs
+  * Add "import" command to cvmfs_server that transforms a 2.0
+    repository into a 2.1 repository (Stratum 0)
+  * Add pin command to cvmfs_talk
+  * Fix reading from socket in talk thread
+  * Add "nameserver set" command to cvmfs_talk
+  * Fix various issues with reading of chunked files
+  * Decrease memory consumption of the inode tracker
+  * Remove trailing empty attribute in listattr callback
+  * Make repositories replicatable by default
+  * Experimental support for repository tags (named snapshots).
+    Allows to mount a specific repository version and to rollback
+    and re-publish previous repository states.
+
+2.1.14:
+  * Fix initial problems introduced with the 2.1.13 security hotfix
+
+2.1.13:
+  * Fix security bug in /etc/auto.cvmfs: due to improper
+    option checking, normal users can get root privileges
+    through autofs.
+
+2.1.12:
+  * Perform host failover after unsuccessful proxy
+    failover (test all paths)
+  * Improve recovery reliabiliy after node crash
+    (force removal of cache database)
+  * Fix help text of cvmfs_talk
+  * Fix timeout for NFS shared maps
+  * Drastically improved performance of copying the inode
+    tracker
+  * Safe guard against concurrent snapshot processes
+  * Drop config.sh dependency from cvmfs_server
+
+2.1.11:
+  * Improve logging for whitelist expiry and fqrn errors
+  * Add network path reset within the same proxy group
+    (re-balance proxies)
+  * Add network path reset for failover hosts
+  * Add missing execmod SELinux exception for 32bit SL6
+  * Fix occasional hangs of gdb when generating stack traces
+  * Improve host/proxy failover logging
+  * Fix host failover
+  * Perform a host failover instead of a proxy failover
+    on HTTP 502, 504 errors
+  * Add experimental support for "micro-syslog" implementation that
+    writes syslog messages to a file.  Add CVMFS_USYSLOG parameter
+    to specify the destination file.
+  * Distinguish information, warning, and error records when
+    writing to syslog
+  * Add -march=i686 to CFLAGS and CXXFLAGS for 32bit builds
+  * Add CVMFS_MOUNT_RW switch parameter.  A read/write mount point
+    can workaround problematic open flags (O_RDWR, O_TRUNC, ...)
+  * Remove unused CVMFS_64BIT_INODES parameter
+  * Avoid __sync_fetch_and_add on 64bit integers with a negative
+    offset.  This breaks on 32bit systems.  It affects the counter
+    for active file system calls in the loader.
+  * SLES11 build system compatibility fixes
+
+2.1.10:
+  * Use continuous inodes on inode generation change instead of
+    fixed bit fields.  This increases the usable inode space.
+  * Ensure unique inode--path relationship during kernel-imposed
+    lifetime of inodes.  Avoiding multiple inodes for the same path
+    avoids large hangs of 100% system load.
+  * Fix remove command in cache manager
+  * Fix uid/euid of shared cache manager
+  * Add 'evict' command to cvmfs_talk in order to remove specific
+    files from cache
+  * Improve logging for fatal cachedb update errors
+  * Fix potential endless loop in signal handler
+  * Add drainout mode and maintenance mode to internal affairs
+  * Add number of forget() calls to file system statistics
+  * Advise the kernel not to cache pages for files verified
+    by cvmfs_fsck
+  * Fix deadlock in 'cvmfs_config reload' when cwd is on cvmfs
+  * Fix reloading with wiping out the cache directory in case
+    the cache base directory is not owned by the cvmfs user
+  * Fix restoring directory handle gauge
+  * Prevent the leveldb build system from picking up the system's
+    snappy library
+
+2.1.9:
+  * RHEL 6.4 SELinux rules for generating stack traces
+  * Include stacktrace files in bugreport tarball
+  * Check for attr utility in cvmfs_config
+  * Fixed potential endless loop in automatic cache cleanup
+  * Switched to SQlite 3.7.16.2
+  * Fixed touching of .cvmfscatalog in server toolkit
+  * Added "pause mode" to 'cvmfs_server publish' in order to allow
+    for manually fixing file catalogs
+  * Fix removal of temporary files in replication tools
+  * Experimental support for "shared NFS maps", which are handled
+    by sqlite and allow for NFS HA setups at the cost of performance
+  * Recognize CVMFS_IPV4_ONLY environment variable and, if set
+    to a non-empty value, don't use IPv6 addresses
+  * Recognize http_proxy in cvmfs server toolkit
+  * Fix handling of "last_snapshot" sentinel in replication
+    when not executed as root
+  * Asynchronous catalog updates in the server toolkit
+  * Fix: shared cache manager race during load-unload cycles
+  * Fix: file descriptor leaks during Fuse module reload
+  * Fix: handling of log level parameter in snapshot
+  * Fix: save and restore open dir and open file counters
+    when the fuse module is reloaded
+  * Fixed several memory leaks when reloading the Fuse module
+  * Improved logging for whitelist verification errors
+  * Added "remount fence" in order to ensure consistent
+    catalog operations
+  * Fix: Rewind file descriptor on download retries
+  * Log inode generation overflows to syslog
+  * Pretty printing for 'cvmfs_config reload'
+  * Fixed selinux context for SL5 in cvmfs_server
+  * Omit autofs warnings in NFS mode
+  * Added "inode tracker" to smoothly connect catalog reloads
+    and reloads of the Fuse module
+  * Fix: handling of "-n" option in mount helper
+  * Log application of new file system snapshots to syslog
+
+2.1.8:
+  * Added SElinux exception to allow unloading of cvmfs module
+  * Run default signal handlers after custom crash handling
+  * Fix for crash handler / ptrace Linux security handling
+  * Support for ignoring x-directory hardlinks in the
+    server toolkit
+  * Fix: evaluation of symlinks could lead to wrong
+    empty or 1-byte symlinks
+  * Use 32bit inodes by default
+  * Fixed wrong location for cache manager debug log
+  * Fixed chksetup error about missing library on Mac
+
+2.1.7:
+  * Added support for CVMFS_KEYS_DIR, which has precedence over
+    CVMFS_PUBLIC_KEY
+  * Changed default install prefix to /usr
+  * Experimental support for file chunking
+  * Experimental support for cache read-only mode
+  * Multi-threaded, extensible storage backend
+  * Improved error reporting on mount failures
+  * Fix: cvmfs-internal 1G default for cache size
+  * Fix: file permissions for local storage backend
+  * Fix: prevent double mount block with private mount points
+  * Fix: store compressed certificate in replication
+  * Fix: Build system for parallel builds
+  * Fix: create stack traces by gdb, thereby handle hidden
+    symbols
+  * Packaging: Do not try to reload when upgrading from
+    the 2.0 branch
+  * Fix: Save fuse module state only after drainout of
+         file system calls
+  * Fix: stale page caches across file catalog reloads
+  * Fix: hardlink count for entries of 2.0 file catalogs
+  * Fix: don't retry downloads on HTTP errors
+  * Fix: comply with system mount return values in the helper
+  * Renamed cvmfs-lib RPM to cvmfs-devel
+  * Fixed cvmfs_config reload on clean nodes
+
+2.1.6:
+  * Fixed hanging reload when reload socket can not be
+    opened
+  * Prohibit the use of 2.0.X cache directories
+  * Fixed 'cvmfs_config chksetup' for root not in sudoers
+  * Added retry with exponential backoff to download
+    worker, adjustable with CVMFS_MAX_RETRY,
+    CVMFS_BACKOFF_INIT, CVMFS_BACKOFF_MAX
+  * Added automatic proxy group reset after
+    CVMFS_PROXY_RESET_AFTER seconds
+  * Added network statistics to 'cvmfs_talk internal affairs'
+  * Fixed 'cvmfs_config stat' for non-standard mount points
+  * Default symbol visibility hidden
+  * Separate stacktrace logs by process
+  * Packaging: don't strip binaries
+  * cvmfs_reload returns with error if socket directory
+    does not exist
+
+2.1.5:
+  * Added "pid cachemgr" command to cvmfs_talk
+  * Added CERN IT public keys
+  * Syslog facility adjustable to one of local0 .. local7
+
+2.1.4:
+  * Check permissions by default
+  * Added cvmfs_suid mount option
+  * Added cvmfs_talk commands "hotpatch history", "parameters"
+  * Hotpatch functionality added (cvmfs_config reload)
+  * Most parameters read by the cvmfs process
+  * Server: fixed modifying attributes
+
+2.1.3:
+  * Fixed race condition when reloading catalogs
+  * Handling of aufs .wh..wh.orph
+  * Added -H "Pragma:" to uses of curl command line tool
+  * Added /etc/exports to the bugreport
+  * Added .cvmfscache and no_nfs_maps sentinel files
+
+2.1.2:
+  * Added sub packages for the server tools and the
+    library
+  * Added Stratum1 (replication) tools
+  * Combined server binaries into cvmfs_swissknife
+  * Bumped external versions: libcurl 7.27.0, c-ares 1.9.1,
+    sqlite 3.7.14, sparsehash 1.12, zlib 1.2.7
+  * Support for remote checking of repositories
+  * Added Ubuntu (deb) packaging specs
+  * Change default values: strict mount to no, shared cache
+    to yes
+  * Check for Fuse4X installation on Mac OS
+
+2.1.1:
+  * Start of 2.1 ChangeLog
+
+2.1.0:
+  see write-up at https://cernvm.cern.ch/portal/release-2.1
+
+2.0.5:
+  * Warn in cvmfs_config chksetup if no cache quota is set
+  * Create cvmfs user in cvmfs_server if necessary
+  * Fixed cvmfs_fsck on xfs
+  * Fixed get_origin in config.sh
+  * Speed up searach for existing mount point in mount helper
+  * Log to syslog when new repository snapshot is applied
+  * Fixed presentation error in cvmfs_stat
+  * Added repository prefix to syslog messages
+  * Fixed reporting of maximum cache size in cvmfs_config stat
+
+2.0.4:
+  * Re-opened the CVMFS_NFILES parameter for overwrites
+
+2.0.3:
+  * Fixed a typo in cvmfs_config stat that makes the Nagios
+    check believe there is no network connectivity
+
+2.0.2:
+  * Write cache cleanup to syslog
+  * Fixed a big stinking bug when cleaning up the cache while
+    downloading
+
+2.0.1:
+  * Fixed build system error for 32bit builds on 64bit systems
+
+2.0.0:
+  * Declared immutable parameters in default.conf as read-only
+  * Fix for Ubuntu 8.04 automounter
+  * Experimental support for file backend added
+  * Verify decompressed size on download
+  * Unlink left-over temporary file catalogs in cvmfs_fsck
+  * Fixed a file descriptor leak on loading certificates
+  * Move dodgy files into a quarantaine folder in the cache
+  * Log proxy switches to syslog
+  * Use stack buffer for streamed file I/O
+  * Fixed a file descriptor leak in the catalog load code
+  * Exponential backoff for download errors to prevent
+    Squid request storms
+  * Log all file open errors except for ENOENT
+  * Added bugreport command to cvmfs_config
+  * More reliable cache db rebuild on corruption
+  * Added stat command to cvmfs_config
+  * Added extended attributes uptime, nclg, nopen, ndownload,
+    timeout, timeout_direct, rx, speed
+  * Added snapshot retention to replica tools
+  * Removed redhat-isms from cvmfs_config setup and in
+    cvmfs service
+  * Mount helper compatible with SuSE
+  * Fixed mount helper for systems without fuse group
+  * Added extended attributes pid, version, lhash, expires
+    maxfd, usedfd, nioerr, proxy, host
+  * Fixed creating nested catalogs in the middle of two
+    nested catalogs
+  * Fixed lazy-load issue in cvmfs_sync with two paths sharing
+    the same prefix
+  * /bin/bash for cvmfs_config and mount/umount helpers
+  * Changed bug report URL to cernvm.support@cern.ch
+  * Fixed wrong mtab after failed umount
+
+0.2.77:
+  * Fixed a race condition in cvmfs service
+
+0.2.76:
+  * Fixed a typo in cvmfs_config setup
+  * cvmfs_fsck recognizes temporary catalogs
+  * Rewrote multi-threading in cvmfs_fsck in order to decrease
+    memory consumption
+
+0.2.75:
+  * Fixed syslog message broadcasting
+  * Warn about corruption in Linux kernel buffers in cvmfs_fsck
+  * Automatically recover from corrupted LRU DB after system
+    crash
+
+0.2.74:
+  * Fixed another internal database error when merging multi-level
+    nested catalogs
+
+0.2.73:
+  * Fixed internal database errors when merging multi-level
+    nested catalogs
+
+0.2.72:
+  * Fixed build script to create /cvmfs directory
+  * Compare working catalog to published one in
+    cvmfs_clgcmp
+  * Fix for touched symlinks
+  * Removed transactions from update statements, they are
+    embraced by a big transaction anyway
+  * Check for chunks in cvmfs_clgcmp
+  * Print SHA-1 in cvmfs_lscat
+  * Added TTL to .cvmfspublished
+  * Added revision to .cvmfspublished
+
+0.2.71:
+  * Fixed wrong return codes in getxattr
+
+0.2.70:
+  * Pulling of previous catalogs changed to best-effort
+    (better recovery trade-off)
+  * Added fsck command to cvmfs_server
+  * Fixed stale objects in kernel caches, on TTL the kernel
+    caches are drained out prior to loading the new catalog
+  * Creation of mucro catalogs adjustable via -m switch
+  * Extended attribute "revision" added, same for all
+    directory entries of a cvmfs mount point
+  * Extended attribute "hash" added for translating a path
+    name into its content hash
+  * cvmfs_snapshot reads parameters per repository from
+    /etc/cvmfs/replica.repositories
+  * Added max_ttl mount option / CVMFS_MAX_TTL parameter,
+    covered by service cvmfs reload
+  * Make cvmfs_fsck work for mounted repositories
+  * Proper return values for cvmfs_fsck
+  * Added revision command to cvmfs-talk
+  * Included revision counter in file catalogs
+
+0.2.69:
+  * Created cvmfs_server script to ease repository creation
+  * Included zlib 1.2.5
+  * Removed libssl dependency
+  * (Re-)added remount command to cvmfs-talk
+  * Removed catalog_timeout mount option (not needed with strong
+    consistency)
+  * Fixed link from parent to nested catalogs (strong consistency)
+  * Use use_ino mount option, which fixes cycle detection problems
+    in gnu fts (du, find, etc.)
+  * Changed Fuse module memory allocator to jemalloc
+  * Support for mucro catalogs in server backend
+  * Moved cvmfsdrc(.local) to /etc/cvmfs/server.(conf|local)
+  * Changed LRU DB locking mode to exclusive.  Improves performance
+    and allows deletion of the LRU DB while cvmfs is mounted
+  * Ignore touched symlinks in cvmfs_sync (instead of unsupported)
+  * Protect against concurrent snapshots
+  * Check registered nested catalogs against published ones
+    in cvmfs_clgcmp
+
+0.2.68:
+  * Fixed a bug in the snapshot script which caused the pull
+    return value to be ignored
+  * Force "strict mount" and catalog signatures by default
+  * Decreased default catalog TTL to 1 hour
+  * Removed /etc/cvmfs/profile.d
+  * Added reload command to cvmfs service for
+    proxy, host, and timeouts
+  * Added "timeout info" and "timeout set" commands to cvmfs-talk
+  * Added "proxy set" command to cvmfs-talk
+  * Added "proxy switch group" command to cvmfs-talk
+  * Added "proxy info" command to cvmfs-talk
+  * Forbid double mount in mount helper
+  * Added "mountpoint" command to cvmfs-talk
+  * Changed fs key for local cache from url host to fqrn
+  * Fixed a bug that can lead to data corruption in case
+    of fail-over because of a timeout
+  * Accept ; separator for hosts, the comma is deprecated
+  * Probe hosts by default only if no proxy is active
+  * service cvmfs probe checks checks more strictly (fs type)
+  * Make statfs (df) report occupied and total cache space
+  * Fix for whitelists and unchanged catalogs in cvmfs_pull
+  * For proxy notation, the | syntax has fail-over and load-balancing
+    combined, the + syntax is deprecated
+  * Create nested catalogs on the directory structure during sync
+  * Avoid auto-nested catalogs in hidden directories
+  * Fixed an incorrect warning about changed inodes in sync
+  * Additional check for malformed root node in catalogs
+  * Build system fix
+  * Added CVMFS_TIMEOUT and CVMFS_TIMEOUT_DIRECT parameters
+    to configure timeouts with and without proxies
+  * Fixed a segfault for deep mounts with non-existing top-level
+    directory
+
+0.2.67:
+  * Mount script typo fix
+
+0.2.65:
+  * CVMFS_HTTP_PROXY required
+  * Default server URL for cern.ch in CERNVM_SERVER_URL
+
+0.2.64:
+  * Build system fix
+
+0.2.63:
+  * Parallel compression and hashing in cvmfs_sync.bin
+  * Fix for multiple webserver entry points
+
+0.2.62:
+  * Added replica tools
+
+0.2.61:
+  * Fixed restarclean command in init script
+  * Fixed atomic counters on Athlon MP
+  * Improved handling of faulty proxies
+  * Automated test suite added
+  * Added options to write difference set to cvmfs_pull
+  * Added cvmfs_scrub utility to check data dir
+  * Bugfix in cvmfs_pull for consecutive downloads
+  * Removed proxy option from cvmfs_pull
+  * Use no-cache option on retry for cvmfs_pull
+
+0.2.60:
+  * Bugfix for cvmfs-init-scripts
+
+0.2.59:
+  * Bugfix for default domain handling
+
+0.2.58:
+  * Bugfix in mount scripts for non-listed repositories
+  * Bugfix in catalog tree module
+
+0.2.57:
+  * Removed CVMFS_REPOSITORY_NAME parameter
+  * Added CVMFS_PUBLIC_KEY parameter
+  * Moved key to /etc/cvmfs/keys/cern.ch.pub
+  * Removed local.d, added domain.d, local configuration
+    now based on files with suffix .local
+  * Changed CVMFS_CACHE_DIR to CVMFS_CACHE_BASE
+  * Changed namespace to /cvmfs/<FQRN>, like
+    /cvmfs/atlas.cern.ch
+
+0.2.56:
+  * Log mount/unmount to syslog
+  * Added short term TTL (4 min.) for offline mode
+  * Removed entry point mount option, all replicas are treated
+    the same way
+  * Added a secure mode (fail on errors) to cvmfs_pull
+  * Changed catalog memory cache to direct mapped / 2 way associative
+  * Changed name space to /cvmfs/cern.ch
+  * Added a couple of consistency checks to cvmfs_config chksetup
+  * cvmfs-talk reads the configuration
+  * Added forward TTL adjustment
+  * Added probe and restartautofs commands to service
+  * Added catalog checksum cache
+  * Added certificate and whitelist cache
+  * Moved the chmod 000 interface to cvmfs-talk
+  * Intermediate catalogs are handled by cvmfs_pull
+  * Added "version patchlevel" command to cvmfs-talk
+  * Increased number of internal file descriptors to 512
+  * More clever catalog memory cache invalidation
+  * SQlite memory allocations tuned (smaller memory footprint)
+
+0.2.55:
+  * Catalog load fix for informed lookup
+  * Require special file available on the server for cvmfs_pull
+
+0.2.54:
+  * Fixes to the RPMs to be more standard compliant
+  * Added snapshot handling to cvmfs_pull
+  * Added CVMFS_STRICT_MOUNT parameter to allow preventing
+    to mount non-listed repositories
+  * Added CVMFS_FORCE_SIGNING parameter
+  * Syslog level adjustable via mount option -o syslog_level
+    and CVMFS_SYSLOG_LEVEL parameter
+  * Mount scripts now recognize the CVMFS_TRACEFILE parameter
+  * Increased catalog memory cache to 2^14 entries
+  * Increased kernel cache lifetime to 60 seconds
+  * More clever lookup of meta-data, huge speedup when many
+    catalogs are loaded
+  * Switched to SQlite 3.7.4
+  * Removed remount_sleep option, now handled by flushing buffers
+  * Fixed some multi-threading bugs
+  * Switched to libcurl 7.21.3
+  * Include timestamp in debug log
+  * Changed failover + load-balaning proxy syntax: introduced 3rd
+    level to specify load-balance blocks first, failover later
+  * Proper mapping of file catalogs and whitelists to repository
+    names
+  * Include-fix for kernel module
+  * Added cvmfs_pull utility for backend storage synchronization
+  * Fixed last-modified handling of cached catalogs
+  * Added cvmfs_lvmrotate for snapshots
+  * Added jemalloc to tarball, just in case
+  * Set config.sh non-executable
+  * Start cvmfs2 as cvmfs:cvmfs instead of cvmfs:fuse
+  * Fixed wrong conversion for pre 0.2.53 cache directories
+
+0.2.53:
+  * Fixed libcrypto multi-threading issue
+  * Fail on very slow downloads (instead of hanging)
+  * Fixed SQlite memory enforcement issue
+  * Switched to SQlite multi-thread mode
+  * Open catalogs read-only on client
+  * Write to syslog when download fails
+  * Added support for local certificate blacklist
+  * Loading of file catalogs rewritten, catalogs now handled
+    by LRU module as well
+  * Removed remount command from cvmfs-talk
+  * Determine file type for rename in kernel module
+  * removed all_catalogs mount option
+  * added bookkeeping of dirty catalogs to avoid unnecessary
+    signing
+  * don't flush the fs change log when cvmfs_sync.bin fails
+  * added cvmfs_lscat utility to assist in cutting directory
+    trees
+  * fix for large file support on 32bit
+
+0.2.52:
+  * fixed Coverity-detected defects
+  * support for lazy attach of catalogs in server tools
+    (extends scalability to at least a couple of thousand
+     catalogs)
+  * bugfix in server tools when moving out nested catalogs
+  * bugfix for large files (> 2GB)
+  * bugfix in mount scripts for CDN usage
+
+0.2.51:
+  * bugfix in mount scripts for CDN
+  * changed cvmfs_sign to sign single catalogs
+  * server tools add schema version to properties table
+  * server tools keep sha1 of previous revision of catalog
+  * server tools register and maintain sha1 of nested catalogs
+  * server tools write extended checksum .cvmfspublished
+  * added "open catalogs" command to cvmfs-talk
+  * add last modified timestamp when making catalog snapshot
+  * fixed time comparison to work on UTC instead of
+    local time
+  * use the SQlite auto_vaccum=full feature for new catalogs
+  * added cvmfs_unsign tool to strip a signature from a
+    file catalog
+  * store .cvmfscatalog as symlink into data dir
+  * added basic rpm for server tools
+
+0.2.50:
+  * another fix in build system for server installation
+
+0.2.49:
+  * fix in build system for server installation
+
+0.2.48:
+  * added full meta data check for cvmfs_clgcmp
+  * bugfix in cvmfs_sync for replaced files
+  * added .cvmfsdirtab support in cvmfs-sync
+  * added fuse as dependency for RPM
+  * check and repair access rights for /dev/fuse
+  * check for /dev/fuse before loading fuse module
+  * replaced MD5 implementation with OpenSSL MD5
+    (10-20% speedup)
+  * replaced SHA1 implementation with OpenSSL SHA1
+    (factor 5 speedup)
+  * fixed some defects found by Coverity
+
+0.2.47:
+  * added basic catalog encryption/decryption routines
+  * added debug mode, turned on by CVMFS_DEBUGLOG=$file
+  * moved standard mount options logic from cvmfs.auto
+    to the mount helper (fixes autofs ":" bug)
+  * fix for pid command in cvmfs-talk
+  * fix for mount scripts
+  * fixes for cvmfs_clgcmp and cvmfs_sync
+
+0.2.46:
+  * mount scripts also check for /etc/cvmfs/site.conf
+  * updated spec file for new mount scripts
+  * fixed mount script compatibility issues
+
+0.2.45:
+  * intermediate release for testing
+
+0.2.44:
+  * fixed mount script compatibility issues
+
+0.2.43:
+  * increased default number of open files to 32768
+
+0.2.42:
+  * build system fixes
+
+0.2.41:
+  * look for public key in /etc/cvmfs instead of /etc/cernvm
+  * excluded public key from make install
+    (installed in packet manager)
+
+0.2.40:
+  * added mount scripts (--enable-mount-scripts)
+  * added grab_mountpoint option (automount hack)
+  * fixed setgid bug at bootstrap
+
+0.2.39:
+  * fixed option handling
+
+0.2.38:
+  * fixed build system destination directories
+
+0.2.37:
+  * removed pidfile option, not required anymore
+  * switch mount options are actually handled as switches
+  * fixed missing O_TRUNC flag in server tools
+
+0.2.36:
+  * cvmfs Makefile.am fix for fuse-duplex.h
+
+0.2.35:
+  * fixed configure.ac name bug
+
+0.2.34:
+  * dropped pcre dependency
+  * evaluate gid and uid Fuse parameter and use it to drop rights
+  * added nofiles mount option to let CernVM-FS increase the ulimit
+  * removed update proxies command from cvmfs-talk
+  * proxies set via mount option
+  * cache directory is created on demand
+  * new boot code, uses fuse_main, compatible with automount,
+    supports -s switch
+  * removed urlenc option, fixed to sha1 now
+  * replaced cvmfs_journald by kernel module,
+    cvmfsd, and synchronization tools, dropped inotify dependency
+  * reworked the talk part with a socket
+  * couple of minor fixes according to coverity report
+  * fixed builtin compilation of libfuse
+  * fixed /var/lock/subsys bookkeeping for cvmfs init script
+  * added CernVM RSA public key to RPM
+
+0.2.33:
+  * added libfuse to build system
+  * added redirfs kernel module and cvmfs filter which is supposed
+    to replace the cvmfs_journald server daemon soon
+  * added libfuse 2.8.4
+
+0.2.32:
+  * bugfixes in cvmfs_sign and authentication thread in cvmfs_journald
+  * revised build system, added option to use builtin libcurl
+  * removed cvmfs1's make_cvmfs
+
+0.2.31:
+  * fixed libcurl multi-thread timeout signal handler issue
+  * wrapper around malloc & co. to abort on out-of-memory
+  * prevent gcc from optimizing stack frames away
+  * fix around stack munging in signal handler
+
+0.2.30:
+  * performance improvements in stat() and open() callbacks
+  * revised integration of tracer module, Intel TBB dependency dropped
+  * export of CVMFS_HTTP_PROXY done by init script
+  * new parameters in cvmfs.initd: ADDITIONAL_OPTIONS, OVERWRITE_OPTIONS
+  * /etc/cvmfs.local is examined by rpm-init-script
+
+0.2.29:
+  * Start of ChangeLog

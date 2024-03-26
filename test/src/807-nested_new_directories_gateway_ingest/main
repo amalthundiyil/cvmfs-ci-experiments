@@ -1,0 +1,48 @@
+#!/bin/bash
+cvmfs_test_name="Repository gateway lease on non-existing directory"
+cvmfs_test_autofs_on_startup=false
+cvmfs_test_suites="quick"
+
+# This test covers the creation of subdirectories that don't yet exists when the reporitory upstream is of type GW.
+# Refers to [CVM-1696](https://sft.its.cern.ch/jira/projects/CVM/issues/CVM-1696)
+#
+# Basically it makes sure that
+# `cvmfs_server transaction test.repo.org/DIR/SUBDIR`
+# works even if both DIR and SUBDIR don't exists yet.
+
+compare_file_checksum() {
+    local file_name=$1
+    local target_checksum=$2
+    local checksum=$(md5sum $file_name | cut -d' ' -f1)
+    echo "Checksum of $file_name is $checksum"
+    if [ "$checksum" != "$target_checksum" ]; then
+        echo "Checksum mismatch for $file_name. Expected $target_checksum. Found $checksum"
+        return 1
+    fi
+}
+
+cvmfs_run_test() {
+    set_up_repository_gateway || return 1
+
+    echo "  Getting lease on subdirectory that does not exists yet should not work"
+    cvmfs_server transaction test.repo.org/foo/bar/
+    # Expect ENOENT
+    if [ $? -ne 2 ]; then
+        echo "  Error should not be possible to open a transaction on a directory that does not exists"
+        return 10
+    fi
+
+    cvmfs_server check -i test.repo.org || return 20
+
+    echo "  Getting lease on a directory we are going to create should work"
+    cvmfs_server transaction test.repo.org/foo/ || return 30
+    mkdir /cvmfs/test.repo.org/foo || return 31
+    echo "New file" > /cvmfs/test.repo.org/foo/bar.txt || return 32
+    cvmfs_server publish test.repo.org || return 33
+
+    cvmfs_server check -i test.repo.org || return 34
+
+    compare_file_checksum /cvmfs/test.repo.org/foo/bar.txt f1885b1a57c71cacbd923fc5e9aefef3 || return 35
+
+    return 0
+}

@@ -1,0 +1,90 @@
+#!/bin/bash
+
+cvmfs_test_name="DNS Timeout"
+
+do_faulty_mount() {
+  local repo=$1
+  shift
+
+  cvmfs_disable_config_repository
+  cvmfs_mount $repo \
+              "CVMFS_HTTP_PROXY=http://no-such-proxy.cern.ch:3128" \
+              "CVMFS_DNS_SERVER=127.0.0.1" \
+              "CVMFS_TIMEOUT=3" \
+              "CVMFS_TIMEOUT_DIRECT=3" \
+              "CVMFS_MAX_RETRIES=0" $@
+}
+
+CVMFS_TEST_017_SILENT_PID=""
+cleanup() {
+  echo "running cleanup()"
+  [ -z $CVMFS_TEST_017_SILENT_PID ] || sudo kill $CVMFS_TEST_017_SILENT_PID
+  cvmfs_enable_config_repository
+}
+
+
+cvmfs_run_test() {
+  local logfile=$1
+
+  local repo="atlas.cern.ch"
+  local retcode=0
+  local server_pid=0
+
+  echo "restarting autofs"
+  autofs_switch off || return 10
+  autofs_switch on  || return 11
+
+  echo "trying to mount $repo first"
+  cvmfs_mount $repo || return 1
+
+  echo "unmounting and cleaning"
+  cvmfs_clean || return 2
+
+  echo "install a disaster cleanup"
+  trap cleanup EXIT HUP INT TERM || return $?
+
+  echo "run a silent DNS server"
+  CVMFS_TEST_017_SILENT_PID=$(open_silent_port UDP 53 $logfile)
+  if [ $? -ne 0 ]; then return 3; fi
+  echo "silent server started with PID $CVMFS_TEST_017_SILENT_PID"
+
+  echo "trying to mount again with unresponsive DNS"
+  local milliseconds
+  milliseconds=$(stop_watch do_faulty_mount $repo)
+  echo "timeout was $milliseconds ms"
+
+  # DNS Timeout for proxies is hard-coded to 2 attempts with 3 second timeout
+  # for the first attempt and up to 6 seconds for the second attempt. In the
+  # beginning, there is a single request to resolve all the proxies.
+  local expected_max=$(((9 + 5) * 1000))
+  local expected_min=$(((6 - 1) * 1000))
+  if [ $milliseconds -gt $expected_max ]; then
+    echo "timeout was too long: $milliseconds (expected at most $expected_max)"
+    CVMFS_TIME_WARNING_FLAG=1
+  fi
+  if [ $milliseconds -lt $expected_min ]; then
+    echo "timeout was too short: $milliseconds (expected at least $expected_min)"
+    retcode=19
+  fi
+
+  echo "restarting autofs"
+  autofs_switch off || return 10
+  autofs_switch on  || return 11
+
+  echo "trying to mount again with unresponsive DNS and long timeout"
+  milliseconds=$(stop_watch do_faulty_mount $repo \
+    "CVMFS_DNS_TIMEOUT=20" "CVMFS_DNS_RETRIES=0")
+  echo "timeout was $milliseconds seconds"
+  expected_max=$(((20 + 5) * 1000))
+  expected_min=$(((20 - 1) * 1000))
+  if [ $milliseconds -gt $expected_max ]; then
+    echo "timeout was too long: $milliseconds (expected at most $expected_max)"
+    CVMFS_TIME_WARNING_FLAG=1
+  fi
+  if [ $milliseconds -lt $expected_min ]; then
+    echo "timeout was too short: $milliseconds (expected at least $expected_min)"
+    retcode=20
+  fi
+
+  return $retcode
+}
