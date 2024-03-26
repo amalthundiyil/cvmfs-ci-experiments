@@ -53,7 +53,7 @@ jobs:
       - name: Sign image 
         run: cosign sign --yes --key ${{ env.COSIGN_PRIVATE_KEY }} ${{ env.REGISTRY_IMAGE_PATH }}
       - name: Scan image 
-        uses: aquasecurity/trivy-action@v0.7.0
+        uses: aquasecurity/trivy-action@v0.18.0
         with:
           image-ref: ${{ env.REGISTRY_IMAGE_PATH }}
 
@@ -76,6 +76,6 @@ jobs:
       - name: Sign chart 
         run: cosign sign --yes --key ${{ env.COSIGN_PRIVATE_KEY }} ${{ env.REGISTRY_IMAGE_PATH }}
       - name: Scan chart 
-        uses: aquasecurity/trivy-action@v0.7.0
+        uses: aquasecurity/trivy-action@v0.18.0
         with:
           image-ref: ${{ env.REGISTRY_IMAGE_PATH }}
