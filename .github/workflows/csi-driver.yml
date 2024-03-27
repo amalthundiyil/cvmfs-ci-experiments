@@ -3,6 +3,7 @@ name: CSI Driver
 on:
   push:
     branches: [devel,master]
+    tags: '*'
   pull_request:
     branches: [devel,master]
 
