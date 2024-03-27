@@ -30,7 +30,7 @@ jobs:
           path: cvmfs-csi/bin
 
   build-image:
-    name: "Build image"
+    name: Build image
     needs: build-bin
     runs-on: ubuntu-latest
     steps:
