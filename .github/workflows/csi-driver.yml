@@ -34,7 +34,7 @@ jobs:
     needs: build-bin
     runs-on: ubuntu-latest
     env:
-      REGISTRY_IMAGE_PATH: docker.io/kubernetes/cvmfs-csi:${{ github.event_name == 'tag' && github.ref || github.sha }}
+      REGISTRY_IMAGE_PATH: docker.io/amalthundiyil/cvmfs-csi:${{ github.event_name == 'tag' && github.ref || github.sha }}
       COSIGN_PRIVATE_KEY: ${{ secrets.HARBOR_SIGNKEY }}
       DOCKER_FILE_NAME: cvmfs-csi/deployments/docker/Dockerfile
       PLATFORMS: linux/amd64,linux/arm64
@@ -73,7 +73,7 @@ jobs:
     name: "Build chart"
     runs-on: ubuntu-latest
     env:
-      REGISTRY_CHART_PATH: docker.io/kubernetes/charts
+      REGISTRY_CHART_PATH: docker.io/amalthundiyil/charts
       COSIGN_PRIVATE_KEY: ${{ secrets.HARBOR_SIGNKEY }}
     steps:
       - name: Checkout code
