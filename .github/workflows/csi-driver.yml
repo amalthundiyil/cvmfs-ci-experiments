@@ -34,14 +34,14 @@ jobs:
     needs: build-bin
     runs-on: ubuntu-latest
     env:
-      REGISTRY_IMAGE_PATH: docker.io/amalthundiyil/cvmfs-csi:${{ github.event_name == 'tag' && github.ref || github.sha }}
-      COSIGN_PRIVATE_KEY: ${{ secrets.HARBOR_SIGNKEY }}
+      REGISTRY_IMAGE_PATH: amalthundiyil/cvmfs-csi:${{ github.event_name == 'tag' && github.ref || github.sha }}
       DOCKER_FILE_NAME: cvmfs-csi/deployments/docker/Dockerfile
       PLATFORMS: linux/amd64,linux/arm64
       BUILD_ARGS: RELEASE=${{ github.event_name == 'tag' && github.ref || github.sha }} GITREF=${{ github.sha }} CREATED=${{ github.event.created_at }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Download binaries
         uses: actions/download-artifact@v4
         with:
@@ -49,8 +49,17 @@ jobs:
           path: cvmfs-csi/bin
       - name: Setup Docker buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Extract metadata
+        id: docker_meta
+        uses: docker/metadata-action@v4.4.0
+        with:
+          images: amalthundiyil/cvmfs-csi
+          tags: type=sha,format=long
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
+        id: build-and-push
         with:
           context: cvmfs-csi
           file: ${{ env.DOCKER_FILE_NAME }}
@@ -58,40 +67,45 @@ jobs:
           push: ${{ github.event_name == 'tag' }}
           tags: ${{ env.REGISTRY_IMAGE_PATH }}
           build-args: ${{ env.BUILD_ARGS }}
+
       - name: Install cosign
         uses: sigstore/cosign-installer@v2.0.0
+
       - name: Sign image 
         env:
+          TAGS: ${{ steps.docker_meta.outputs.tags }}
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-        run: cosign sign --key ${{ env.COSIGN_PRIVATE_KEY }} ${{ env.REGISTRY_IMAGE_PATH }}
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+        run: cosign sign --yes --key ${{ env.COSIGN_PRIVATE_KEY }} ${{ env.REGISTRY_IMAGE_PATH }}
       - name: Scan image 
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.REGISTRY_IMAGE_PATH }}
 
-  build-chart:
-    name: "Build chart"
-    runs-on: ubuntu-latest
-    env:
-      REGISTRY_CHART_PATH: docker.io/amalthundiyil/charts
-      COSIGN_PRIVATE_KEY: ${{ secrets.HARBOR_SIGNKEY }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Deploy chart
-        uses: helm/github-action@v2
-        with:
-          chart-ref: ${{ github.sha }}
-          chart-path: cvmfs-csi/deployments/helm/cvmfs-csi
-          registry: ${{ env.REGISTRY_CHART_PATH }}
-          push-chart: ${{ github.event_name == 'tag' }}
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3.4.0
-      - name: Sign image 
-        env:
-          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-        run: cosign sign --yes --key env://COSIGN_PRIVATE_KEY env://REGISTRY_IMAGE_PATH
-      - name: Scan chart 
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY_IMAGE_PATH }}
+  # build-chart:
+  #   name: "Build chart"
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     REGISTRY_CHART_PATH: docker.io/amalthundiyil/charts
+  #     COSIGN_PRIVATE_KEY: ${{ secrets.HARBOR_SIGNKEY }}
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #     - name: Deploy chart
+  #       uses: helm/github-action@v2
+  #       with:
+  #         chart-ref: ${{ github.sha }}
+  #         chart-path: cvmfs-csi/deployments/helm/cvmfs-csi
+  #         registry: ${{ env.REGISTRY_CHART_PATH }}
+  #         push-chart: ${{ github.event_name == 'tag' }}
+  #     - name: Install Cosign
+  #       uses: sigstore/cosign-installer@v3.4.0
+  #     - name: Sign image 
+  #       env:
+  #         COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+  #       run: cosign sign --yes --key env://COSIGN_PRIVATE_KEY env://REGISTRY_IMAGE_PATH
+  #     - name: Scan chart 
+  #       uses: aquasecurity/trivy-action@master
+  #       with:
+  #         image-ref: ${{ env.REGISTRY_IMAGE_PATH }}
