@@ -81,10 +81,22 @@ jobs:
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
 
-      - name: Scan image 
-        uses: aquasecurity/trivy-action@master
+      - name: Run Trivy vulnerability scanner 
+        uses: aquasecurity/trivy-action@9ab158e8597f3b310480b9a69402b419bc03dbd5 # tag=0.8.0
         with:
-          image-ref: '${{ steps.docker_meta.outputs.tags }}:${{ steps.build-and-push.outputs.digest }}'
+          image-ref: ${{ steps.docker_meta.outputs.tags }}
+          scan-type: 'config'
+          hide-progress: false
+          format: 'sarif'
+          scan-ref: 'charts/sample-helm-devsecops'
+          output: 'trivy-results.sarif'
+          exit-code: '1'
+          ignore-unfixed: true
+
+      - name: Upload Trivy scan results 
+        uses: github/codeql-action/upload-sarif@312e093a1892bd801f026f1090904ee8e460b9b6 # v2.1.34
+        with:
+          sarif_file: 'trivy-results.sarif'
 
   # build-chart:
   #   name: "Build chart"
