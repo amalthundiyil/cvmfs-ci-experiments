@@ -33,11 +33,6 @@ jobs:
     name: "Build image"
     needs: build-bin
     runs-on: ubuntu-latest
-    env:
-      REGISTRY_IMAGE_PATH: amalthundiyil/cvmfs-csi:${{ github.event_name == 'tag' && github.ref || github.sha }}
-      DOCKER_FILE_NAME: cvmfs-csi/deployments/docker/Dockerfile
-      PLATFORMS: linux/amd64,linux/arm64
-      BUILD_ARGS: RELEASE=${{ github.event_name == 'tag' && github.ref || github.sha }} GITREF=${{ github.sha }} CREATED=${{ github.event.created_at }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -65,11 +60,11 @@ jobs:
         id: build-and-push
         with:
           context: cvmfs-csi
-          file: ${{ env.DOCKER_FILE_NAME }}
-          platforms: ${{ env.PLATFORMS }}
+          file:  cvmfs-csi/deployments/docker/Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name == 'tag' }}
-          tags: ${{ env.REGISTRY_IMAGE_PATH }}
-          build-args: ${{ env.BUILD_ARGS }}
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          build-args: RELEASE=${{ github.event_name == 'tag' && github.ref || github.sha }} GITREF=${{ github.sha }} CREATED=${{ github.event.created_at }}
 
       - name: Sign image with a key
         run: |
