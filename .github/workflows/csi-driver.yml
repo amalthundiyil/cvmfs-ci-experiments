@@ -58,7 +58,11 @@ jobs:
           push: ${{ github.event_name == 'tag' }}
           tags: ${{ env.REGISTRY_IMAGE_PATH }}
           build-args: ${{ env.BUILD_ARGS }}
+      - name: "Install cosign"
+        uses: sigstore/cosign-installer@v2.0.0
       - name: Sign image 
+        env:
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: cosign sign --yes --key ${{ env.COSIGN_PRIVATE_KEY }} ${{ env.REGISTRY_IMAGE_PATH }}
       - name: Scan image 
         uses: aquasecurity/trivy-action@master
@@ -81,7 +85,11 @@ jobs:
           chart-path: cvmfs-csi/deployments/helm/cvmfs-csi
           registry: ${{ env.REGISTRY_CHART_PATH }}
           push-chart: ${{ github.event_name == 'tag' }}
-      - name: Sign chart 
+      - name: "Install cosign"
+        uses: sigstore/cosign-installer@v2.0.0
+      - name: Sign image 
+        env:
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: cosign sign --yes --key ${{ env.COSIGN_PRIVATE_KEY }} ${{ env.REGISTRY_IMAGE_PATH }}
       - name: Scan chart 
         uses: aquasecurity/trivy-action@master
