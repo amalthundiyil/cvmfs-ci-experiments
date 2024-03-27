@@ -66,6 +66,7 @@ jobs:
           push: ${{ github.event_name == 'tag' }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           build-args: RELEASE=${{ github.event_name == 'tag' && github.ref || github.sha }} GITREF=${{ github.sha }} CREATED=${{ github.event.created_at }}
+          load: true
 
       - name: Sign image
         if: ${{ github.event_name == 'tag' }}
