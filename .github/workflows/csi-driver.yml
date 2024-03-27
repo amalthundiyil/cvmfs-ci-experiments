@@ -64,7 +64,7 @@ jobs:
           context: cvmfs-csi
           file:  cvmfs-csi/deployments/docker/Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name == 'tag' }}
+          push: ${{ startsWith(github.ref, 'refs/tags/v') }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           build-args: RELEASE=${{ github.event_name == 'tag' && github.ref || github.sha }} GITREF=${{ github.sha }} CREATED=${{ github.event.created_at }}
 
@@ -83,7 +83,7 @@ jobs:
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
 
       - name: Scan image
-        if: ${{ github.event_name == 'tag' }}
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: anchore/scan-action@v3
         with:
           image: ${{ steps.docker_meta.outputs.tags }}
