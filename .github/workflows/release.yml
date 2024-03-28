@@ -136,9 +136,8 @@ jobs:
           for each in $ALL_CHARTS; do
             CHART_ROOT_FOLDERS=$(echo $CHART_ROOT_FOLDERS | sed -E -e "s#$each\/charts\/\S+##g")
           done
-          echo $CHART_ROOT_FOLDERS
 
-      - name: Release charts
+      - name: Build and Release chart
         env: 
           PUSH_CHART: ${{ startsWith(github.ref, 'refs/tags/v') }}
         run: |
@@ -153,6 +152,7 @@ jobs:
             done
 
             helm lint .
+            echo "amal"
 
             if REMOTE_VERSION=$(helm search repo $(basename ${REGISTRY_PATH})/$CHART_NAME --version ${LOCAL_VERSION} | grep $(basename ${REGISTRY_PATH})/$CHART_NAME); then
               echo "INFO: $(basename ${REGISTRY_PATH})/$CHART_NAME:${LOCAL_VERSION} chart already exists in remote."
@@ -164,6 +164,7 @@ jobs:
               echo "${REGISTRY_SIGNKEY}" | base64 -d > secring.gpg
               helm package --sign --key registry --keyring secring.gpg .
 
+              echo "amal2"
               if $PUSH_CHART && [ "$REMOTE_VERSION" == "" ]; then
                 echo "INFO: will push ${CHART_NAME}-${LOCAL_VERSION}.tgz and ${CHART_NAME}-${LOCAL_VERSION}.tgz.prov"
                 set +x
@@ -175,6 +176,7 @@ jobs:
             else
               helm package .
 
+              echo "amal3"
               if $PUSH_CHART && [ "$REMOTE_VERSION" == "" ]; then
                 echo "INFO: will push ${CHART_NAME}-${LOCAL_VERSION}.tgz"
                 helm push ${CHART_NAME}-${LOCAL_VERSION}.tgz oci://${REGISTRY_CHART_PATH}
