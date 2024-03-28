@@ -101,6 +101,7 @@ jobs:
     env:
       REGISTRY_CHART_PATH: amalthundiyil/charts
       REGISTRY: registry.cern.ch
+      REGISTRY_PATH: registry.cern.ch/amalthundiyil/charts
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
