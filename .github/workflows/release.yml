@@ -138,7 +138,7 @@ jobs:
 
       - name: Release charts
         env: 
-          PUSH: ${{ startsWith(github.ref, 'refs/tags/v') }}
+          PUSH_CHART: ${{ startsWith(github.ref, 'refs/tags/v') }}
         run: |
           for chart in ${CHART_ROOT_FOLDERS}; do
             cd $chart
