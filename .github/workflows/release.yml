@@ -121,12 +121,12 @@ jobs:
           images: ${{ env.REGISTRY_CHART_PATH }}
           tags: ${{ github.ref_name || github.sha }}
 
-      - name: Add Helm repositories
-        run: |
-          helm repo add cern https://${REGISTRY}/chartrepo/cern
-          helm repo add stable https://${REGISTRY}/chartrepo/stable
-          helm repo add $(basename ${REGISTRY_PATH}) "https://${REGISTRY_PATH}" --force-update
-          helm repo update
+      # - name: Add Helm repositories
+      #   run: |
+      #     helm repo add cern https://${REGISTRY}/chartrepo/cern
+      #     helm repo add stable https://${REGISTRY}/chartrepo/stable
+      #     helm repo add $(basename ${REGISTRY_PATH}) "https://${REGISTRY_PATH}" --force-update
+      #     helm repo update
 
       - name: Find charts in directory tree
         run: |
