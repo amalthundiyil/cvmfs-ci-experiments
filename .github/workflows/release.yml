@@ -136,6 +136,7 @@ jobs:
           for each in $ALL_CHARTS; do
             CHART_ROOT_FOLDERS=$(echo $CHART_ROOT_FOLDERS | sed -E -e "s#$each\/charts\/\S+##g")
           done
+          echo $CHART_ROOT_FOLDERS
 
       - name: Release charts
         env: 
