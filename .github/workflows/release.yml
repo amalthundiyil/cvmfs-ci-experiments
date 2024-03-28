@@ -100,7 +100,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REGISTRY_CHART_PATH: amalthundiyil/charts
-      REGISTRY: registry.cern.ch
+      REGISTRY: docker.io
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
