@@ -129,18 +129,15 @@ jobs:
           # helm repo add $(basename ${REGISTRY_PATH}) "https://${REGISTRY_PATH}" --force-update
           helm repo update
 
-      - name: Find charts in directory tree
+      - name: Build and Release chart
+        env: 
+          PUSH_CHART: ${{ startsWith(github.ref, 'refs/tags/v') }}
         run: |
           ALL_CHARTS=$(find "$PWD" -type f -iname "Chart.yaml" -not -path '*/\.git/*' | xargs dirname)
           CHART_ROOT_FOLDERS=${ALL_CHARTS}
           for each in $ALL_CHARTS; do
             CHART_ROOT_FOLDERS=$(echo $CHART_ROOT_FOLDERS | sed -E -e "s#$each\/charts\/\S+##g")
           done
-
-      - name: Build and Release chart
-        env: 
-          PUSH_CHART: ${{ startsWith(github.ref, 'refs/tags/v') }}
-        run: |
           for chart in ${CHART_ROOT_FOLDERS}; do
             cd $chart
             CHART_NAME=$(grep '^name:' Chart.yaml | awk '{print $2}')
