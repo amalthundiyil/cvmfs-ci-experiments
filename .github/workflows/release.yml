@@ -100,6 +100,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REGISTRY_CHART_PATH: amalthundiyil/charts
+      REGISTRY: registry.cern.ch
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -111,7 +112,7 @@ jobs:
         uses: sigstore/cosign-installer@v3.4.0
 
       - name: Log in to Registry
-        run: echo "${{ secrets.HARBOR_PASSWORD }}" | helm registry login ${{ env.REGISTRY_CHART_PATH }} -u ${{ secrets.HARBOR_USERNAME }} --password-stdin
+        run: echo "${{ secrets.HARBOR_PASSWORD }}" | helm registry login ${{ env.REGISTRY }} -u ${{ secrets.HARBOR_USERNAME }} --password-stdin
 
       - name: Add Helm repositories
         run: |
