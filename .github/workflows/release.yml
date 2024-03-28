@@ -144,9 +144,9 @@ jobs:
             LOCAL_VERSION=$(grep '^version:' Chart.yaml | awk '{print $2}')
             helm dep update .
 
-            for managed_chart in $(ls charts/ | grep -v ".tgz"); do
-              ls charts/${managed_chart}* | grep -E "$managed_chart-[0-9]+.[0-9]+.[0-9]+.tgz$" | xargs rm $1 -f
-            done
+            # for managed_chart in $(ls charts/ | grep -v ".tgz"); do
+            #   ls charts/${managed_chart}* | grep -E "$managed_chart-[0-9]+.[0-9]+.[0-9]+.tgz$" | xargs rm $1 -f
+            # done
 
             helm lint .
             echo "amal"
