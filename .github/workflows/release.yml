@@ -1,0 +1,222 @@
+name: Release
+
+on:
+  push:
+    branches: [devel,master]
+    tags: '*'
+  pull_request:
+    branches: [devel,master]
+
+jobs:
+  build-bin:
+    name: "Build binary"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+      - name: Build binary
+        run: |
+          cd cvmfs-csi
+          make build-cross
+      - name: Archive binaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bin
+          path: cvmfs-csi/bin
+
+  build-image:
+    name: Build image
+    needs: build-bin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.4.0
+
+      - name: Login to Registry
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.HARBOR_USERNAME  }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: bin
+          path: cvmfs-csi/bin
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract metadata
+        id: docker_meta
+        uses: docker/metadata-action@v4.4.0
+        with:
+          images: amalthundiyil/cvmfs-csi
+          tags: ${{ github.ref_name || github.sha }}
+
+      - name: Build and push container images
+        uses: docker/build-push-action@v2
+        id: build-and-push
+        with:
+          context: cvmfs-csi
+          file:  cvmfs-csi/deployments/docker/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ startsWith(github.ref, 'refs/tags/v') }}
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          build-args: RELEASE=${{ github.ref_name || github.sha }} GITREF=${{ github.sha }} CREATED=${{ github.event.created_at }}
+
+      - name: Sign image
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        run: |
+          images=""
+          for tag in ${TAGS}; do
+            images+="${tag}@${DIGEST} "
+          done
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images}
+        env:
+          TAGS: ${{ steps.docker_meta.outputs.tags }}
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+
+      - name: Scan image
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.docker_meta.outputs.tags }}
+
+  build-chart:
+    name: "Build chart"
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY_CHART_PATH: amalthundiyil/charts
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+
+      - name: Release Charts
+        run: |
+          # Due to https://github.com/GoogleContainerTools/kaniko/pull/2040 do not use CI_REGISTRY_USER and CI_REGISTRY_PASSWORD in kaniko anymore.
+          # Although this is not required for docker we set this equal for compatibility reasons
+          - |
+            if [[ -z "${REGISTRY_USER}" || -z "${REGISTRY_PASSWORD}" ]]; then
+              REGISTRY_USER=${CI_REGISTRY_USER}
+              REGISTRY_PASSWORD=${CI_REGISTRY_PASSWORD}
+              unset CI_REGISTRY_USER; unset CI_REGISTRY_PASSWORD;
+            fi
+          - |
+            if [ -z "${REGISTRY_CHART_PATH}" ]; then
+              if [ -z "${REGISTRY}" ]; then
+                REGISTRY="registry.cern.ch"
+              fi
+            else
+              REGISTRY=$(echo ${REGISTRY_CHART_PATH} | cut -d / -f 1)
+            fi
+          - helm version
+          - echo ${REGISTRY_PASSWORD} | helm registry login ${REGISTRY} -u ${REGISTRY_USER} --password-stdin
+          # Backwards compatibility
+          # Extract REGISTRY_CHART_PATH from chartmuseum structure
+          - |
+            if [ -z "$REGISTRY_CHART_PATH" ]; then
+              # REGISTRY_PATH is deprecated, extract REGISTRY_CHART_PATH if not provided
+              # Once the deprecation for chartrepo from registry.cern.ch happens, we drop REGISTRY_PATH
+              if [ -z "$REGISTRY_PATH" ]; then
+                REGISTRY_PATH="${REGISTRY}/chartrepo/$CI_PROJECT_NAMESPACE"
+              else
+                echo "WARNING: REGISTRY_PATH is deprecated. Please see updated documentation on how to use REGISTRY_CHART_PATH instead."
+              fi
+              # default repo for OCI charts
+              REGISTRY_CHART_PATH="${REGISTRY}/$(basename $REGISTRY_PATH)/charts"
+            else
+              REGISTRY_PATH=${REGISTRY}/chartrepo/$(echo ${REGISTRY_CHART_PATH} | cut -d / -f2)
+            fi
+          # Add usefull helm repos
+          - helm repo add cern https://${REGISTRY}/chartrepo/cern
+          - helm repo add stable https://${REGISTRY}/chartrepo/stable
+          - helm repo add $(basename ${REGISTRY_PATH}) "https://${REGISTRY_PATH}" --force-update
+          - helm repo update
+          # Find charts on the directory tree
+          - |
+            if [ -z "${CHART_ROOT_FOLDERS}" ]; then
+              ALL_CHARTS="$(find "$PWD" -type f -iname "Chart.yaml" -not -path '*/\.git/*' | xargs dirname)"
+              # Do not package subcharts of charts
+              CHART_ROOT_FOLDERS=${ALL_CHARTS}
+              for each in $ALL_CHARTS; do
+                CHART_ROOT_FOLDERS=$(echo $CHART_ROOT_FOLDERS | sed -E -e "s#$each\/charts\/\S+##g")
+              done
+            fi
+          - |
+            for chart in ${CHART_ROOT_FOLDERS}; do
+              cd $chart
+              # Get chart infos
+              CHART_NAME=$(grep '^name:' Chart.yaml | awk '{print $2}')
+              LOCAL_VERSION=$(grep '^version:' Chart.yaml | awk '{print $2}')
+              helm dep update .
+
+              # HACK: https://github.com/helm/helm/issues/11816
+              # Drop packaged charts downloaded with `helm dep update` if manually managed charts/subcharts are provided
+              for managed_chart in $(ls charts/ | grep -v ".tgz"); do
+                ls charts/${managed_chart}* | grep -E "$managed_chart-[0-9]+.[0-9]+.[0-9]+.tgz$" | xargs rm $1 -f
+              done
+
+              helm lint .
+              # Skip pushing chart if already on remote
+              if REMOTE_VERSION=$(helm search repo $(basename ${REGISTRY_PATH})/$CHART_NAME --version ${LOCAL_VERSION} | grep $(basename ${REGISTRY_PATH})/$CHART_NAME); then
+                echo "INFO: $(basename ${REGISTRY_PATH})/$CHART_NAME:${LOCAL_VERSION} chart already exists in remote."
+                # NOTE: Although we could skip here knowing the chart already exists, we will package the chart to validate build.
+              else
+                REMOTE_VERSION=""
+              fi
+              # push charts
+              if [ -n "$REGISTRY_SIGNKEY" ]; then
+              # chart with signature
+                echo "${REGISTRY_SIGNKEY}" | base64 -d > secring.gpg
+                echo "WARNING: Using REGISTRY_SIGNKEY is deprecated. Use cosign instead with variable COSIGN_PRIVATE_KEY"
+                helm package --sign --key registry --keyring secring.gpg .
+                if $PUSH_CHART && [ "$REMOTE_VERSION" == "" ]; then
+                  echo "INFO: will push ${CHART_NAME}-${LOCAL_VERSION}.tgz and ${CHART_NAME}-${LOCAL_VERSION}.tgz.prov"
+                  set +x
+                  curl --fail -F "chart=@${CHART_NAME}-${LOCAL_VERSION}.tgz" -F "prov=@${CHART_NAME}-${LOCAL_VERSION}.tgz.prov" -H "authorization: Basic $(echo -n ${REGISTRY_USER}:${REGISTRY_PASSWORD} | base64 -w 0)" https://${REGISTRY}/api/chartrepo/$(basename ${REGISTRY_PATH})/charts
+                  set -x
+                else
+                  echo "INFO: will not push ${CHART_NAME}-${LOCAL_VERSION}.tgz"
+                fi
+              else
+                # chart without signature
+                helm package .
+                if $PUSH_CHART && [ "$REMOTE_VERSION" == "" ]; then
+                  echo "INFO: will push ${CHART_NAME}-${LOCAL_VERSION}.tgz"
+                  helm push ${CHART_NAME}-${LOCAL_VERSION}.tgz oci://${REGISTRY_CHART_PATH}
+                  set +x
+                  curl --fail -F "chart=@${CHART_NAME}-${LOCAL_VERSION}.tgz" -H "authorization: Basic $(echo -n ${REGISTRY_USER}:${REGISTRY_PASSWORD} | base64 -w 0)" https://${REGISTRY}/api/chartrepo/$(basename ${REGISTRY_PATH})/charts
+                  set -x
+                else
+                  echo "INFO: will not push ${CHART_NAME}-${LOCAL_VERSION}.tgz"
+                fi
+                ## Sign Image with cosign
+                if [ -n "${COSIGN_PRIVATE_KEY}" ] && $PUSH_CHART; then
+                  echo -n "${COSIGN_PRIVATE_KEY}" | base64 -d > cosign.key
+                  cosign login ${REGISTRY} -u ${REGISTRY_USER} -p ${REGISTRY_PASSWORD}
+                  cosign sign -r --key cosign.key -y ${REGISTRY_CHART_PATH}/${CHART_NAME}:${LOCAL_VERSION}
+                  rm cosign.key
+                fi
+              fi
+            done
+        env:
+          REGISTRY_CHART_PATH: registry.cern.ch/amalthundiyil/charts
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          REGISTRY_SIGNKEY: ""
+          PUSH_CHART: ${{ startsWith(github.ref, 'refs/tags/v') }}
