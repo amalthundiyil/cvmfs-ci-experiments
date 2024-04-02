@@ -142,14 +142,13 @@ jobs:
         run: |
           images=""
           for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST} "
+            images+="${tag} "
           done
           cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images}
         env:
           TAGS: ${{ steps.docker_meta.outputs.tags }}
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-          DIGEST: ${{ github.sha }}
 
       - name: Scan chart
         if: startsWith(github.ref, 'refs/tags/v')
