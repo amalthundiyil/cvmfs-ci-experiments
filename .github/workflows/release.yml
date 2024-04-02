@@ -149,6 +149,7 @@ jobs:
           TAGS: ${{ steps.docker_meta.outputs.tags }}
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+          DIGEST: ${{ github.sha }}
 
       - name: Scan chart
         if: startsWith(github.ref, 'refs/tags/v')
