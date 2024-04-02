@@ -77,7 +77,7 @@ jobs:
 
       - name: Sign image
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
-        run: cosign sign --yes --key env://COSIGN_PRIVATE_KEY '${{ env.REGISTRY_IMAGE_PATH }}:${{ github.ref_name }}@${{ github.sha }}'
+        run: cosign sign --yes --key env://COSIGN_PRIVATE_KEY '${{ env.REGISTRY_IMAGE_PATH }}:${{ github.ref_name }}@${{ steps.build-and-push.outputs.digest }}'
         env:
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
