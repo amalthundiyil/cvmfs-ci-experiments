@@ -14,14 +14,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # actions/checkout@v4
+
       - name: Set up Go
         uses: actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # actions/setup-go@v4
         with:
           go-version: "1.20"
+
       - name: Build binary
         run: |
           cd cvmfs-csi
           make build-cross
+
       - name: Archive binaries
         if: always()
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # actions/upload-artifact@v4
@@ -34,7 +37,7 @@ jobs:
     needs: build-bin
     runs-on: ubuntu-latest
     env:
-      REGISTRY: registry.cern.ch
+      IMAGE_URL: registry.cern.ch/cvmfs-csi/cvmfs-csi
 
     steps:
       - name: Checkout code
@@ -60,13 +63,6 @@ jobs:
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@2b51285047da1547ffb1b2203d8be4c0af6b1f20 # docker/setup-buildx-action@v3
 
-      - name: Extract metadata
-        id: docker_meta
-        uses: docker/metadata-action@c4ee3adeed93b1fa6a762f209fb01608c1a22f1e # docker/metadata-action@v4.4.0
-        with:
-          images: cvmfs-csi/cvmfs-csi
-          tags: ${{ github.ref_name || github.sha }}
-
       - name: Build and push container images
         uses: docker/build-push-action@ac9327eae2b366085ac7f6a2d02df8aa8ead720a # docker/build-push-action@v2
         id: build-and-push
@@ -75,28 +71,21 @@ jobs:
           file: cvmfs-csi/deployments/docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ startsWith(github.ref, 'refs/tags/v') }}
-          tags: "${{ env.REGISTRY }}/${{ steps.docker_meta.outputs.tags }}"
+          tags: "${{ env.IMAGE_URL }}:${{ github.ref_name }}@${{ github.sha }}"
           build-args: RELEASE=${{ github.ref_name || github.sha }} GITREF=${{ github.sha }} CREATED=${{ github.event.created_at }}
 
       - name: Sign image
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
-        run: |
-          images=""
-          for tag in ${TAGS}; do
-            images+="${{ env.REGISTRY }}/${tag}@${DIGEST} "
-          done
-          cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images}
+        run: cosign sign --yes --key env://COSIGN_PRIVATE_KEY '${{ env.IMAGE_URL }}:${{ github.ref_name }}@${{ github.sha }}'
         env:
-          TAGS: ${{ steps.docker_meta.outputs.tags }}
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
 
       - name: Scan image
         if: startsWith(github.ref, 'refs/tags/v')
         uses: aquasecurity/trivy-action@f72b7e8127f2e443feedad3c314e6fe75e5a8b84 # aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ steps.docker_meta.outputs.tags }}
+          image-ref: "${{ env.IMAGE_URL }}:${{ github.ref_name }}@${{ github.sha }}"
 
   build-chart:
     name: Build chart
@@ -130,7 +119,6 @@ jobs:
           tags: ${{ github.ref_name || github.sha }}
 
       - name: Push chart
-        id: push_chart
         uses: bsord/helm-push@650e04843d399b727368d37022b576c6a6ff3291 # bsord/helm-push@v4.1.0
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         with:
