@@ -122,7 +122,7 @@ jobs:
         id: docker_meta
         uses: docker/metadata-action@v4.4.0
         with:
-          images: cvmfs-csi/cvmfs-csi
+          images: cvmfs-csi/charts
           tags: ${{ github.ref_name || github.sha }}
 
       - name: Push chart
