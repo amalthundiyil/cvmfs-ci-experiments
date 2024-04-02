@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-bin:
-    name: "Build binary"
+    name: Build binary
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -44,9 +44,9 @@ jobs:
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         uses: docker/login-action@v3
         with:
-          registry: docker.io
-          username: ${{ secrets.HARBOR_USERNAME  }}
-          password: ${{ secrets.HARBOR_PASSWORD }}
+          registry: registry.cern.ch
+          username: ${{ secrets.REGISTRY_USERNAME  }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Download binaries
         uses: actions/download-artifact@v4
@@ -61,7 +61,7 @@ jobs:
         id: docker_meta
         uses: docker/metadata-action@v4.4.0
         with:
-          images: amalthundiyil/cvmfs-csi
+          images: cvmfs-csi/cvmfs-csi
           tags: ${{ github.ref_name || github.sha }}
 
       - name: Build and push container images
@@ -96,12 +96,10 @@ jobs:
           image-ref: ${{ steps.docker_meta.outputs.tags }}
 
   build-chart:
-    name: "Build chart"
+    name: Build chart
     runs-on: ubuntu-latest
     env:
-      REGISTRY_CHART_PATH: amalthundiyil/charts
-      REGISTRY: registry.cern.ch
-      REGISTRY_PATH: registry.cern.ch/amalthundiyil/charts
+      REGISTRY_CHART_PATH: registry.cern.ch/cvmfs-csi/charts
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -112,95 +110,27 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3.4.0
 
-      - name: Log in to Registry
-        run: echo "${{ secrets.HARBOR_PASSWORD }}" | helm registry login docker.io -u ${{ secrets.HARBOR_USERNAME }} --password-stdin
-
-      - name: Extract metadata
-        id: docker_meta
-        uses: docker/metadata-action@v4.4.0
+      - name: Push chart
+        id: push_chart
+        uses: bsord/helm-push@v4.1.0
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         with:
-          images: ${{ env.REGISTRY_CHART_PATH }}
-          tags: ${{ github.ref_name || github.sha }}
+          useOCIRegistry: true
+          registry-url: 'oci://${{ env.REGISTRY_CHART_PATH }}'
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          access-token: ${{ secrets.REGISTRY_PASSWORD }} # access token = password (for robots on harbor)
+          force: true
+          chart-folder: cvmfs-csi/deployments/helm/cvmfs-csi
 
-      - name: Add Helm repositories
-        run: |
-          helm repo add cern https://${REGISTRY}/chartrepo/cern
-          helm repo add stable https://${REGISTRY}/chartrepo/stable
-          # helm repo add $(basename ${REGISTRY_PATH}) "https://${REGISTRY_PATH}" --force-update
-          helm repo update
-
-      - name: Build and Release chart
-        env: 
-          PUSH_CHART: ${{ startsWith(github.ref, 'refs/tags/v') }}
-        run: |
-          ALL_CHARTS=$(find "$PWD" -type f -iname "Chart.yaml" -not -path '*/\.git/*' | xargs dirname)
-          CHART_ROOT_FOLDERS=${ALL_CHARTS}
-          for each in $ALL_CHARTS; do
-            CHART_ROOT_FOLDERS=$(echo $CHART_ROOT_FOLDERS | sed -E -e "s#$each\/charts\/\S+##g")
-          done
-          for chart in ${CHART_ROOT_FOLDERS}; do
-            cd $chart
-            CHART_NAME=$(grep '^name:' Chart.yaml | awk '{print $2}')
-            LOCAL_VERSION=$(grep '^version:' Chart.yaml | awk '{print $2}')
-            helm dep update .
-
-            # for managed_chart in $(ls charts/ | grep -v ".tgz"); do
-            #   ls charts/${managed_chart}* | grep -E "$managed_chart-[0-9]+.[0-9]+.[0-9]+.tgz$" | xargs rm $1 -f
-            # done
-
-            helm lint .
-            echo "amal"
-
-            if REMOTE_VERSION=$(helm search repo $(basename ${REGISTRY_PATH})/$CHART_NAME --version ${LOCAL_VERSION} | grep $(basename ${REGISTRY_PATH})/$CHART_NAME); then
-              echo "INFO: $(basename ${REGISTRY_PATH})/$CHART_NAME:${LOCAL_VERSION} chart already exists in remote."
-            else
-              REMOTE_VERSION=""
-            fi
-
-            if [ -n "$REGISTRY_SIGNKEY" ]; then
-              echo "${REGISTRY_SIGNKEY}" | base64 -d > secring.gpg
-              helm package --sign --key registry --keyring secring.gpg .
-
-              echo "amal2"
-              if $PUSH_CHART && [ "$REMOTE_VERSION" == "" ]; then
-                echo "INFO: will push ${CHART_NAME}-${LOCAL_VERSION}.tgz and ${CHART_NAME}-${LOCAL_VERSION}.tgz.prov"
-                set +x
-                curl --fail -F "chart=@${CHART_NAME}-${LOCAL_VERSION}.tgz" -F "prov=@${CHART_NAME}-${LOCAL_VERSION}.tgz.prov" -H "authorization: Basic $(echo -n ${REGISTRY_USER}:${REGISTRY_PASSWORD} | base64 -w 0)" https://${REGISTRY}/api/chartrepo/$(basename ${REGISTRY_PATH})/charts
-                set -x
-              else
-                echo "INFO: will not push ${CHART_NAME}-${LOCAL_VERSION}.tgz"
-              fi
-            else
-              helm package .
-
-              echo "amal3"
-              if $PUSH_CHART && [ "$REMOTE_VERSION" == "" ]; then
-                echo "INFO: will push ${CHART_NAME}-${LOCAL_VERSION}.tgz"
-                helm push ${CHART_NAME}-${LOCAL_VERSION}.tgz oci://${REGISTRY_CHART_PATH}
-                set +x
-                curl --fail -F "chart=@${CHART_NAME}-${LOCAL_VERSION}.tgz" -H "authorization: Basic $(echo -n ${REGISTRY_USER}:${REGISTRY_PASSWORD} | base64 -w 0)" https://${REGISTRY}/api/chartrepo/$(basename ${REGISTRY_PATH})/charts
-                set -x
-              else
-                echo "INFO: will not push ${CHART_NAME}-${LOCAL_VERSION}.tgz"
-              fi
-            fi
-          done
-
-      - name: Sign image
+      - name: Sign chart
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         run: |
-          images=""
-          for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST} "
-          done
-          cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images}
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${{ env.REGISTRY_CHART_PATH }}:${{ github.ref_name }}
         env:
-          TAGS: ${{ steps.docker_meta.outputs.tags }}
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-          DIGEST: ${{ github.sha }}
 
-      - name: Scan image
+      - name: Scan chart
         if: startsWith(github.ref, 'refs/tags/v')
         uses: aquasecurity/trivy-action@master
         with:
