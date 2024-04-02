@@ -72,7 +72,7 @@ jobs:
           file: cvmfs-csi/deployments/docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ startsWith(github.ref, 'refs/tags/v') }}
-          tags: "${{ env.REGISTRY_IMAGE_PATH }}:${{ github.ref_name }}@${{ github.sha }}"
+          tags: "${{ env.REGISTRY_IMAGE_PATH }}:${{ github.ref_name }}"
           build-args: RELEASE=${{ github.ref_name || github.sha }} GITREF=${{ github.sha }} CREATED=${{ github.event.created_at }}
 
       - name: Sign image
