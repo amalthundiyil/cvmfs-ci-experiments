@@ -86,7 +86,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: aquasecurity/trivy-action@f72b7e8127f2e443feedad3c314e6fe75e5a8b84 # aquasecurity/trivy-action@master
         with:
-          image-ref: "${{ env.REGISTRY_IMAGE_PATH }}:${{ github.ref_name }}@${{ github.sha }}"
+          image-ref: "${{ env.REGISTRY_IMAGE_PATH }}:${{ github.ref_name }}"
 
   build-chart:
     name: Build chart
