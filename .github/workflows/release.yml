@@ -142,7 +142,7 @@ jobs:
         run: |
           images=""
           for tag in ${TAGS}; do
-            images+="${tag} "
+            images+="registry.cern.ch/${tag} "
           done
           cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images}
         env:
